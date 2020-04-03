@@ -183,3 +183,6 @@ inheritance_casting_main: student_inheritance.h student_inheritance_lib.cc inher
 
 async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) async_logger_orig.cc async_enqueue_orig.cc -o $@
+
+async_logger_lib_test: async_logger_orig.h async_logger_orig.cc async_logger_lib_test.cc
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_orig.cc async_logger_lib_test.cc -o $@
