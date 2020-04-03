@@ -16,6 +16,7 @@ USER_DIR = .
 
 # http://www.valgrind.org/docs/manual/quick-start.html#quick-start.prepare
 # Compile your program with -g . . . Using -O0 is also a good idea, 
+# cc1plus: error: ‘-fsanitize=address’ and ‘-fsanitize=kernel-address’ are incompatible with ‘-fsanitize=thread’
 CXXFLAGS= -std=c++11 -pthread -ggdb -Wall -Wextra -g -O0 -fno-inline -fsanitize=address,undefined -I$(GTEST_HEADERS)
 CXXFLAG-NOTEST= -std=c++11 -ggdb -Wall -Wextra -g -O0 -fno-inline -fsanitize=address,undefined
 CXXFLAGS-NOSANITIZE= -std=c++11 -ggdb -Wall -Wextra -g -O0 -fno-inline -I$(GTEST_HEADERS)
@@ -179,3 +180,6 @@ student_inheritance_lib_test: student_inheritance.h student_inheritance_lib.cc s
 
 inheritance_casting_main: student_inheritance.h student_inheritance_lib.cc inheritance_casting_main.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) student_inheritance_lib.cc inheritance_casting_main.cc -o $@
+
+async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.cc
+	$(CC) $(CXXFLAGS) $(LDFLAGS) async_logger_orig.cc async_enqueue_orig.cc -o $@
