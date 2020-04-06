@@ -189,3 +189,6 @@ async_logger_lib_test: async_logger_orig.h async_logger_orig.cc async_logger_lib
 
 async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) async_logger_improved.cc async_enqueue_improved.cc -o $@
+
+async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
