@@ -39,7 +39,7 @@ void async_logger::run() {
 async_logger::~async_logger() {
   active_ = false;
   thread_.join();
-  ::std::cout << "Destroying async_logger." << std::endl;
+  ::std::cerr << "Destroying async_logger." << std::endl;
 }
 
 // Queue for processing on the other thread.
