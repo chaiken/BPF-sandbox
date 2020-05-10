@@ -20,7 +20,7 @@ class async_logger {
    * the async_logger ctor runs.   Make the variable atomic in order to prevent
    * data races when queue_ and active_ are updated in unpredictable order. */
   std::atomic_bool active_{true};
-  std::queue<std::string> queue_;
+  std::queue<std::pair<uint64_t, std::string>> queue_;
   // Synchronize access to the queue_ data member.
   std::mutex mutex_;
 

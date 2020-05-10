@@ -8,11 +8,16 @@
 
 #include "async_logger_improved.h"
 
+#include "folly/tracing/StaticTracepoint.h"
+
 #include <iostream>
 
 void async_logger::print_oldest_msg() {
-  std::cout << queue_.front() << std::endl;
+  uint64_t operationId = queue_.front().first;
+  std::string front = queue_.front().second;
+  std::cout << front << std::endl;
   queue_.pop();
+  FOLLY_SDT(async_logger_improved, operation_end, operationId, front);
 }
 
 // This function runs in a dedicated thread.
@@ -47,6 +52,10 @@ async_logger::~async_logger() {
 // Calling lock on a mutex object that has already been locked by other threads
 // causes the current thread to block (wait) until it can own a lock to it.
 void async_logger::log(const std::string &str) {
+  static std::uint64_t operationIdCounter(0);
+
   std::unique_lock<std::mutex> lock(mutex_);
-  queue_.emplace(str);
+  std::uint64_t operationId = operationIdCounter++;
+  FOLLY_SDT(async_logger_improved, operation_start, operationId, str);
+  queue_.emplace(std::pair<std::uint64_t, std::string>(operationId, str));
 }

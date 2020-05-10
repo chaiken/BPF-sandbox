@@ -14,6 +14,11 @@ GTESTLIBS= $(GTESTLIBPATH)/libgtest.a $(GTESTLIBPATH)/libgtest_main.a
 # Where to find user code.
 USER_DIR = .
 
+USDT_DIR=$(HOME)/gitsrc/bcc
+USDT_LIB_PATH=$(USDT_DIR)/build/src/cc
+USDT_HEADERS=$(USDT_DIR)/tests/python/include
+USDT_LIBS=$(USDT_LIB_PATH)/libbcc.a $(USDT_LIB_PATH)/libbcc_bpf.a
+
 # http://www.valgrind.org/docs/manual/quick-start.html#quick-start.prepare
 # Compile your program with -g . . . Using -O0 is also a good idea, 
 # cc1plus: error: ‘-fsanitize=address’ and ‘-fsanitize=kernel-address’ are incompatible with ‘-fsanitize=thread’
@@ -23,6 +28,7 @@ CXXFLAGS-NOSANITIZE= -std=c++11 -ggdb -Wall -Wextra -g -O0 -fno-inline -I$(GTEST
 # Set Google Test's header directory as a system directory, such that
 # the compiler doesn't generate warnings in Google Test headers.
 CPPFLAGS += -isystem $(GTEST_DIR)/include
+USDT_FLAGS= -I$(USDT_HEADERS)
 
 LDFLAGS= -ggdb -g -fsanitize=address -L$(GTESTLIBPATH) -lpthread
 LDFLAGS-NOSANITIZE= -ggdb -g -L$(GTESTLIBPATH) -lpthread
@@ -187,8 +193,8 @@ async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.c
 async_logger_lib_test: async_logger_orig.h async_logger_orig.cc async_logger_lib_test.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_orig.cc async_logger_lib_test.cc -o $@
 
-async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc
-	$(CC) $(CXXFLAGS) $(LDFLAGS) async_logger_improved.cc async_enqueue_improved.cc -o $@
+async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(USDT_HEADERS)
+	$(CC) $(CXXFLAGS)  $(USDT_FLAGS) $(LDFLAGS) $(USDT_LIBS) async_logger_improved.cc async_enqueue_improved.cc -o $@
 
 async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
