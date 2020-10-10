@@ -46,11 +46,53 @@ LIBWR=-Llibwr -lwr
 async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) async_logger_orig.cc async_enqueue_orig.cc -o $@
 
-async_logger_lib_test: async_logger_orig.h async_logger_orig.cc async_logger_lib_test.cc
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_orig.cc async_logger_lib_test.cc -o $@
+async_logger_lib_test_orig: async_logger_orig.h async_logger_orig.cc async_logger_lib_test_orig.cc
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_orig.cc async_logger_lib_test_orig.cc -o $@
 
 async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(USDT_HEADERS)
 	$(CC) $(CXXFLAGS)  $(USDT_FLAGS) $(LDFLAGS) $(USDT_LIBS) async_logger_improved.cc async_enqueue_improved.cc -o $@
 
 async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
+
+BINARY_LIST = async_logger_orig async_logger_lib_test async_logger_improved async_logger_lib_test_improved
+
+TESTS_LIST = async_logger_lib_test_orig async_logger_lib_test_improved
+
+clean:
+	rm -rf *.o *~ $(BINARY_LIST) *.gcda *.gcov *.gcno *.info *_output *css *html a.out
+
+all:
+	make clean
+	make $(BINARY_LIST)
+
+.SILENT: *.o
+
+# “–coverage” is a synonym for-fprofile-arcs, -ftest-coverage(compiling) and
+# -lgcov(linking).
+COVERAGE_EXTRA_FLAGS = --coverage -Werror
+
+$(TESTS_LIST): CXXFLAGS += $(COVERAGE_EXTRA_FLAGS)
+
+# https://github.com/gcovr/gcovr/issues/314
+# 'A “stamp mismatch” error is shown when the compilation time stamp *within*
+# the gcno and gcda files doesn't match.'
+# Therefore compilation must take place in association with the same test binary,
+# not in association with another dependent test.
+coverage_all:
+	make clean
+	@echo "CXXFLAGS is $(CXXFLAGS)"
+	run_lcov_all.sh $(NO_DEPS_LIST)
+
+TEST_EXTRA_FLAGS = -Werror -O2
+TESTFLAGS = -std=c++11 -pthread -ggdb -Wall -Wextra -g $(TEST_EXTRA_FLAGS) -fno-inline -fsanitize=address,undefined -I$(GTEST_HEADERS)
+
+# Doesn't work.
+%.o: %.cc
+	override CXXFLAGS = $(TESTFLAGS)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $< -o $@
+
+test_all:
+	make clean
+	@echo "CXXFLAGS is $(CXXFLAGS)"
+	run_all_tests.sh $(TESTS_LIST)
