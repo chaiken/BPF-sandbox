@@ -55,7 +55,7 @@ async_logger_improved: async_logger_improved.h async_logger_improved.cc async_en
 async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
 
-BINARY_LIST = async_logger_orig async_logger_lib_test async_logger_improved async_logger_lib_test_improved
+BINARY_LIST = async_logger_orig async_logger_lib_test_orig async_logger_improved async_logger_lib_test_improved
 
 TESTS_LIST = async_logger_lib_test_orig async_logger_lib_test_improved
 
