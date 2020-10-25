@@ -31,7 +31,7 @@ echo "Headers are in ${FOLLY_DIR}/folly/; add '-I${FOLLY_DIR} to Makefile."
 
 echo "Building documentation . . ."
 cd "$FOLLY_DIR"/folly/docs
-make 
+make
 echo "Produced file ${FOLLY_DIR}/folly/docs/index.html: "
 echo "$(ls -l ${FOLLY_DIR}/folly/docs/index.html)"
 
