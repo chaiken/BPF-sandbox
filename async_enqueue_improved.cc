@@ -32,8 +32,16 @@ int main(int argc, char **argv) {
   async_logger logger;
   logger.log("main_thread\n");
   std::thread test1([&logger]() { logger.log("testing thread 1"); });
-  for (int idx = 0; idx < argc; ++idx) {
-    logger.log("Argument " + std::to_string(idx) + " = " + argv[idx]);
+  // Skip over the application's name.
+  for (int idx = 1; idx < argc; ++idx) {
+    std::string not_a_number =
+        "Argument " + std::to_string(idx) + " = " + argv[idx];
+    std::pair<bool, double> conversion = make_numeric(argv[idx]);
+    if (conversion.first) {
+      logger.log(conversion.second);
+    } else {
+      logger.log(not_a_number);
+    }
   }
   logger.log("\nMain ending\n");
   test1.join();

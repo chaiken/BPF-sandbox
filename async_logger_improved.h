@@ -15,6 +15,8 @@
 #include <string>
 #include <thread>
 
+constexpr uint32_t NUMPTS = 1e8;
+
 class async_logger {
   /* Initialize active_ true so that the run() method does not terminate before
    * the async_logger ctor runs.   Make the variable atomic in order to prevent
@@ -39,6 +41,9 @@ public:
   ~async_logger();
   // Writes queue.
   void log(const std::string &str);
+  void log(const double value);
 };
+
+std::pair<bool, double> make_numeric(const std::string &arg);
 
 #endif

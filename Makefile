@@ -23,6 +23,11 @@ FOLLY_LIB_PATH=$(FOLLY_DIR)/build
 FOLLY_HEADERS=$(FOLLY_DIR)
 FOLLY_LIBS=$(FOLLY_LIB_PATH)/libfolly.a $(FOLLY_LIB_PATH)/libfolly_test_util.a
 
+CPP_SRC_DIR=$(HOME)/gitsrc/Cpp-Exercises
+# The template_integrate code has only headers, so there's no need to create a
+# static library.
+INTEGRATE_HEADER=$(CPP_SRC_DIR)/template_integrate.h
+
 # http://www.valgrind.org/docs/manual/quick-start.html#quick-start.prepare
 # Compile your program with -g . . . Using -O0 is also a good idea, 
 # cc1plus: error: ‘-fsanitize=address’ and ‘-fsanitize=kernel-address’ are incompatible with ‘-fsanitize=thread’
@@ -34,6 +39,7 @@ CXXFLAGS-NOSANITIZE= -std=c++17 -ggdb -Wall -Wextra -g -O0 -fno-inline -I$(GTEST
 CPPFLAGS += -isystem $(GTEST_DIR)/include
 BPF_FLAGS= -I$(BPF_HEADERS)
 FOLLY_FLAGS= -I$(FOLLY_HEADERS)
+INTEGRATE_FLAGS= -I$(CPP_SRC_DIR)
 
 LDFLAGS= -ggdb -g -fsanitize=address -L$(GTESTLIBPATH) -lpthread
 LDFLAGS-NOSANITIZE= -ggdb -g -L$(GTESTLIBPATH) -lpthread
@@ -54,11 +60,11 @@ async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.c
 async_logger_lib_test_orig: async_logger_orig.h async_logger_orig.cc async_logger_lib_test_orig.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_orig.cc async_logger_lib_test_orig.cc -o $@
 
-async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS)
-	$(CC) $(CXXFLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(LDFLAGS) $(BPF_LIBS) $(FOLLY_LIBS) async_logger_improved.cc async_enqueue_improved.cc -o $@
+async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
+	$(CC) $(CXXFLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(INTEGRATE_FLAGS) $(LDFLAGS) $(BPF_LIBS) $(FOLLY_LIBS) async_logger_improved.cc async_enqueue_improved.cc -o $@
 
-async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc $(FOLLY_HEADERS)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(FOLLY_FLAGS) $(GTESTLIBS) $(FOLLY_LIBS) async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
+async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(FOLLY_FLAGS)  $(INTEGRATE_FLAGS) $(GTESTLIBS) $(FOLLY_LIBS) async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
 
 BINARY_LIST = async_logger_orig async_logger_lib_test_orig async_logger_improved async_logger_lib_test_improved
 
