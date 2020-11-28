@@ -73,7 +73,7 @@ void async_logger::print_oldest_msg() {
   std::string front = queue_.front().second;
   std::cout << front << std::endl;
   queue_.pop();
-  FOLLY_SDT(async_logger_improved, operation_end, operationId, front);
+  FOLLY_SDT(async_logger_improved, operation_end, operationId, front.c_str());
 }
 
 // This function runs in a dedicated thread.
@@ -112,7 +112,7 @@ void async_logger::log(const std::string &str) {
 
   std::unique_lock<std::mutex> lock(mutex_);
   std::uint64_t operationId = operationIdCounter++;
-  FOLLY_SDT(async_logger_improved, operation_start, operationId, str);
+  FOLLY_SDT(async_logger_improved, operation_start, operationId, str.c_str());
   queue_.emplace(std::pair<std::uint64_t, std::string>(operationId, str));
 }
 
@@ -126,8 +126,9 @@ void async_logger::log(const double val) {
 
   std::unique_lock<std::mutex> lock(mutex_);
   std::uint64_t operationId = operationIdCounter++;
+  char input[MAX_DIGITS];
   FOLLY_SDT(async_logger_improved, operation_start, operationId,
-            std::to_string(val));
+            sprintf(input, "%e", val));
 
   std::vector<double> interval(NUMPTS);
   interval.push_back(0.0);
@@ -137,9 +138,8 @@ void async_logger::log(const double val) {
   double result = integration::do_integrate<double>(interval);
   char result_str[MAX_DIGITS];
   sprintf(result_str, "%e", result);
-  std::string summary = "Integral of y=x^3 over the interval {0," +
-                        std::to_string(val) + "} in " + std::to_string(NUMPTS) +
-                        " steps is " + result_str;
+  std::string summary =
+      "Interval: {0," + std::to_string(val) + "}, Result: " + result_str;
 
   // str is going to be the integral of y=x^3 over the interval (0.0, val).
   queue_.emplace(std::pair<std::uint64_t, std::string>(operationId, summary));

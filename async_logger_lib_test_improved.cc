@@ -94,9 +94,7 @@ protected:
     */
     for (size_t idx = 0; idx < inputvec->size(); ++idx) {
       EXPECT_NE(string::npos,
-                strCout->str().find("Integral of y=x^3 over the interval {0," +
-                                    to_string(inputvec->at(idx)) + "} in " +
-                                    to_string(NUMPTS) + " steps is "));
+                strCout->str().find("Interval: {0," + to_string(inputvec->at(idx)) + "}, Result: "));
     }
 
     delete test1;
