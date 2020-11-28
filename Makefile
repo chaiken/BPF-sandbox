@@ -50,8 +50,8 @@ THREADFLAGS= -D_REENTRANT -lpthread
 #https://gcc.gnu.org/ml/gcc-help/2003-08/msg00128.html
 DEADCODESTRIP := -Wl,-static -fvtable-gc -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,-s
 # gcc and clang won't automatically link .cc files against the standard library.
-CC=/usr/bin/g++
-#CC=/usr/bin/clang
+#CC=/usr/bin/g++
+CC=/usr/bin/clang++
 LIBWR=-Llibwr -lwr
 
 async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.cc
