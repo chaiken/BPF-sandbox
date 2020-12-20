@@ -23,6 +23,9 @@ FOLLY_LIB_PATH=$(FOLLY_DIR)/build
 FOLLY_HEADERS=$(FOLLY_DIR)
 FOLLY_LIBS=$(FOLLY_LIB_PATH)/libfolly.a $(FOLLY_LIB_PATH)/libfolly_test_util.a
 
+GCC_DIR=$(HOME)/gitsrc/gcc
+GCC_HEADERS=$(GCC_DIR)
+
 CPP_SRC_DIR=$(HOME)/gitsrc/Cpp-Exercises
 # The template_integrate code has only headers, so there's no need to create a
 # static library.
@@ -40,6 +43,8 @@ CPPFLAGS += -isystem $(GTEST_DIR)/include
 BPF_FLAGS= -I$(BPF_HEADERS)
 FOLLY_FLAGS= -I$(FOLLY_HEADERS)
 INTEGRATE_FLAGS= -I$(CPP_SRC_DIR)
+PREPROCESSOR_FLAGS= -CC -C -E
+GCC_FLAGS= -I$(GCC_HEADERS)
 
 LDFLAGS= -ggdb -g -fsanitize=address -L$(GTESTLIBPATH) -lpthread
 LDFLAGS-NOSANITIZE= -ggdb -g -L$(GTESTLIBPATH) -lpthread
@@ -63,8 +68,14 @@ async_logger_lib_test_orig: async_logger_orig.h async_logger_orig.cc async_logge
 async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
 	$(CC) $(CXXFLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(INTEGRATE_FLAGS) $(LDFLAGS) $(BPF_LIBS) $(FOLLY_LIBS) async_logger_improved.cc async_enqueue_improved.cc -o $@
 
+async_logger_improved_preprocessor_output: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
+	$(CC) $(CXXFLAGS) $(PREPROCESSOR_FLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(INTEGRATE_FLAGS) async_logger_improved.cc -o async_logger_improved.i
+
 async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
 	$(CC) $(CXXFLAGS) $(LDFLAGS) $(FOLLY_FLAGS)  $(INTEGRATE_FLAGS) $(GTESTLIBS) $(FOLLY_LIBS) async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
+
+arg_classifier_lib_test: arg_classifier.h arg_classifier_lib_test.cc $(GCC_HEADERS)
+	/usr/bin/g++ $(CXXFLAGS) $(LDFLAGS) $(GCC_FLAGS) $(GTESTLIBS) -DDEBUG arg_classifier_lib_test.cc -o $@
 
 BINARY_LIST = async_logger_orig async_logger_lib_test_orig async_logger_improved async_logger_lib_test_improved
 
