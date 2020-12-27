@@ -7,11 +7,8 @@
 
 #include "gcc/typeclass.h"
 
-#include <cstdarg>
-#include <iostream>
-
 #include <cxxabi.h>
-#include <type_traits>
+#include <iostream>
 #include <typeinfo>
 
 namespace arg_classify {
@@ -39,12 +36,23 @@ template <typename T> void pretty_print_info(T x, int type) {
 
 //  Following
 //  https://gcc.gnu.org/onlinedocs/libstdc++/manual/ext_demangling.html
-template <typename T> int get_builtin_classification(T x) {
+template <typename T>
+int _get_builtin_classification(T x, bool verbose = false) {
   int type_class = __builtin_classify_type(x);
-#ifdef DEBUG
-  pretty_print_info(x, type_class);
-#endif
+  if (verbose) {
+    pretty_print_info(x, type_class);
+  }
   return type_class;
+}
+
+// Determine if the BPF JIT will accept a Folly userspace static tracepoint with
+// the provided data type.  Rely on the compiler's __builtin_classify_type()
+// since Facebook's library does, at least for x86_64.
+template <typename T> constexpr bool folly_sdt_parameter_is_invalid(T x) {
+  return ((no_type_class == _get_builtin_classification(x)) ||
+          (record_type_class == _get_builtin_classification(x)) ||
+          (record_type_class == _get_builtin_classification(x)) ||
+          (opaque_type_class == _get_builtin_classification(x)));
 }
 
 } // namespace arg_classify
