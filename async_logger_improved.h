@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef ASYNC_LOGGER_ORIG_H
-#define ASYNC_LOGGER_ORIG_H
+#ifndef ASYNC_LOGGER_IMPROVED_H
+#define ASYNC_LOGGER_IMPROVED_H
 
 #include <atomic>
 #include <mutex>
