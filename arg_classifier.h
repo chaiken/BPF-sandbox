@@ -28,8 +28,8 @@ template <typename T> void pretty_print_info(T x, int type) {
   std::string enum_name =
       (-1 == type) ? "no_type_class" : type_names[__builtin_classify_type(x)];
 
-  std::cout << x << " of type " << unmangled << " of size " << sizeof(x)
-            << " is in " << enum_name << std::endl
+  std::cout << "Type " << unmangled << " of size " << sizeof(x) << " is in "
+            << enum_name << std::endl
             << std::endl;
   free(unmangled);
 }

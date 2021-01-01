@@ -5,6 +5,8 @@
 
 using namespace std;
 
+#include <memory>
+
 namespace arg_classify {
 namespace local_testing {
 
@@ -31,6 +33,8 @@ TEST(ClassifierTest, Ints) {
 // std::strings are record_type_class!
 TEST(ClassifierTest, Strings) {
   // libgcc fails to classify standard strings.
+  // The 32 bytes for a std::string includes the 8-byte c_str() raw pointer plus
+  // the allocator that is also a std::basic_string template parameter.
   const std::string obvious{"Hello, world!"};
   std::cout << "String: ";
   EXPECT_EQ(record_type_class,
@@ -55,6 +59,28 @@ TEST(ClassifierTest, Strings) {
   EXPECT_EQ(record_type_class,
             _get_builtin_classification<const std::string &>(ref, true));
   EXPECT_TRUE(folly_sdt_parameter_is_invalid(ref));
+}
+
+TEST(ClassifierTest, Pointers) {
+  // Size 16 includes the raw pointer and the pointer to the control block.
+  // Obviously "records" can be any arbitrary number of 8-byte chunks.
+  const std::shared_ptr<int> intp{new int(4096)};
+  EXPECT_EQ(
+      record_type_class,
+      _get_builtin_classification<const std::shared_ptr<int>>(intp, true));
+  EXPECT_TRUE(folly_sdt_parameter_is_invalid(intp));
+
+  EXPECT_EQ(pointer_type_class,
+            _get_builtin_classification<int *>(intp.get(), true));
+  EXPECT_FALSE(folly_sdt_parameter_is_invalid(intp.get()));
+}
+
+TEST(ClassifierTest, Functions) {
+  auto adder = [](int a, int b) { return a + b; };
+  EXPECT_EQ(
+      record_type_class,
+      _get_builtin_classification<std::function<int(int, int)>>(adder, true));
+  EXPECT_TRUE(folly_sdt_parameter_is_invalid(adder));
 }
 
 } // namespace local_testing
