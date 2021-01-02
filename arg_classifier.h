@@ -51,7 +51,6 @@ int _get_builtin_classification(T x, bool verbose = false) {
 template <typename T> constexpr bool folly_sdt_parameter_is_invalid(T x) {
   return ((no_type_class == _get_builtin_classification(x)) ||
           (record_type_class == _get_builtin_classification(x)) ||
-          (record_type_class == _get_builtin_classification(x)) ||
           (opaque_type_class == _get_builtin_classification(x)));
 }
 
