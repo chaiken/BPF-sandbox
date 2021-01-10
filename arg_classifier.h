@@ -21,7 +21,7 @@ const std::string type_names[]{
     "record_type_class",    "union_type_class",    "array_type_class",
     "string_type_class",    "lang_type_class",     "opaque_type_class"};
 
-template <typename T> constexpr void pretty_print_info(T x, int type) {
+template <typename T> void pretty_print_info(T x, int type) {
   // If @a __output_buffer is not long enough, it is expanded using realloc.
   char *unmangled = abi::__cxa_demangle(typeid(x).name(), 0, 0, 0);
 
