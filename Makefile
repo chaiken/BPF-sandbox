@@ -18,15 +18,17 @@ BPF_LIB_PATH=/usr/lib/x86_64-linux-gnu
 BPF_HEADERS=/usr/include/bcc
 BPF_LIBS=$(BPF_LIB_PATH)/libbcc.a $(BPF_LIB_PATH)/libbcc-loader-static.a $(BPF_LIB_PATH)/libbcc_bpf.a
 
-FOLLY_DIR=$(HOME)/gitsrc/folly
-FOLLY_LIB_PATH=$(FOLLY_DIR)/build
+TLD=$(HOME)/gitsrc
+
+FOLLY_DIR=$(TLD)/folly
+FOLLY_LIB_PATH=$(TLD)/fbcode-install/folly/lib
 FOLLY_HEADERS=$(FOLLY_DIR)
 FOLLY_LIBS=$(FOLLY_LIB_PATH)/libfolly.a $(FOLLY_LIB_PATH)/libfolly_test_util.a
 
-GCC_DIR=$(HOME)/gitsrc/gcc
+GCC_DIR=$(TLD)/gcc
 GCC_HEADERS=$(GCC_DIR)
 
-CPP_SRC_DIR=$(HOME)/gitsrc/Cpp-Exercises
+CPP_SRC_DIR=$(TLD)/Cpp-Exercises
 # The template_integrate code has only headers, so there's no need to create a
 # static library.
 INTEGRATE_HEADER=$(CPP_SRC_DIR)/template_integrate.h
@@ -69,10 +71,10 @@ async_logger_improved: async_logger_improved.h async_logger_improved.cc async_en
 	$(CC) $(CXXFLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(INTEGRATE_FLAGS) $(LDFLAGS) $(BPF_LIBS) $(FOLLY_LIBS) async_logger_improved.cc async_enqueue_improved.cc -o $@
 
 async_logger_improved_preprocessor_output: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
-	$(CC) $(CXXFLAGS) $(PREPROCESSOR_FLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(INTEGRATE_FLAGS) async_logger_improved.cc -o async_logger_improved.i
+	$(CC) $(CXXFLAGS) $(PREPROCESSOR_FLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(INTEGRATE_FLAGS) $(GCC_FLAGS) async_logger_improved.cc -o async_logger_improved.i
 
-async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(FOLLY_FLAGS)  $(INTEGRATE_FLAGS) $(GTESTLIBS) $(FOLLY_LIBS) async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
+async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc arg_classifier.h $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(FOLLY_FLAGS)  $(INTEGRATE_FLAGS) $(GCC_FLAGS) $(GTESTLIBS) $(FOLLY_LIBS) async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
 
 arg_classifier_lib_test: arg_classifier.h arg_classifier_lib_test.cc $(GCC_HEADERS)
 	/usr/bin/g++ $(CXXFLAGS) $(LDFLAGS) $(GCC_FLAGS) $(GTESTLIBS) arg_classifier_lib_test.cc -o $@
