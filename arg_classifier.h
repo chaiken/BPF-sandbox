@@ -54,6 +54,13 @@ template <typename T> constexpr bool folly_sdt_parameter_is_invalid(T x) {
           (opaque_type_class == _get_builtin_classification(x)));
 }
 
+// https://eli.thegreenplace.net/2014/variadic-templates-in-c/
+template <typename T, typename... Pars>
+constexpr bool folly_sdt_parameters_are_all_valid(T first, Pars... pars) {
+  return (!folly_sdt_parameter_is_invalid(first)) &&
+         (!folly_sdt_parameter_is_invalid(pars...));
+}
+
 } // namespace arg_classify
 
 #endif

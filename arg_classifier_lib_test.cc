@@ -170,5 +170,22 @@ TEST(ClassifierTest, Objects) {
   EXPECT_TRUE(folly_sdt_parameter_is_invalid(astruct));
 }
 
+TEST(ClassifierTest, TwoParameters) {
+  // Ints are valid.
+  int a{1}, b{2};
+  EXPECT_TRUE(folly_sdt_parameters_are_all_valid(a, b));
+
+  // Strings are invalid.
+  const std::string obvious{"Hello, world!"},
+      lessobvious{"regardless of inclination"};
+  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(obvious, lessobvious));
+
+  // Cannot provide a string parameter no matter what.
+  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(b, obvious));
+
+  // C-strings are okay.
+  EXPECT_TRUE(folly_sdt_parameters_are_all_valid(b, obvious.c_str()));
+}
+
 } // namespace local_testing
 } // namespace arg_classify
