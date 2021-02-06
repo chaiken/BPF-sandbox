@@ -173,18 +173,26 @@ TEST(ClassifierTest, Objects) {
 TEST(ClassifierTest, TwoParameters) {
   // Ints are valid.
   int a{1}, b{2};
-  EXPECT_TRUE(folly_sdt_parameters_are_all_valid(a, b));
-
-  // Strings are invalid.
   const std::string obvious{"Hello, world!"},
       lessobvious{"regardless of inclination"};
-  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(obvious, lessobvious));
+  EXPECT_TRUE(folly_sdt_parameters_are_all_valid(obvious.c_str(), lessobvious.c_str(), a, b));
+
+  // Strings are invalid.
+  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(obvious.c_str(), lessobvious.c_str(), obvious, lessobvious));
 
   // Cannot provide a string parameter no matter what.
-  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(b, obvious));
+  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(obvious.c_str(), lessobvious.c_str(), b, obvious));
 
   // C-strings are okay.
-  EXPECT_TRUE(folly_sdt_parameters_are_all_valid(b, obvious.c_str()));
+  EXPECT_TRUE(folly_sdt_parameters_are_all_valid(obvious.c_str(), lessobvious.c_str(), b, obvious.c_str()));
+}
+
+TEST(ClassifierTest, MaybeInsertProbe) {
+  int a{1}, b{2};
+  const std::string obvious{"Hello, world!"},
+    lessobvious{"regardless of inclination"};
+  EXPECT_TRUE(maybe_insert_folly_sdt_probe(obvious.c_str(), lessobvious.c_str(), a, b));
+  EXPECT_FALSE(maybe_insert_folly_sdt_probe(obvious.c_str(), lessobvious.c_str(), obvious, lessobvious));
 }
 
 } // namespace local_testing

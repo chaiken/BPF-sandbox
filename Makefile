@@ -76,8 +76,8 @@ async_logger_improved_preprocessor_output: async_logger_improved.h async_logger_
 async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc arg_classifier.h $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
 	$(CC) $(CXXFLAGS) $(LDFLAGS) $(FOLLY_FLAGS)  $(INTEGRATE_FLAGS) $(GCC_FLAGS) $(GTESTLIBS) $(FOLLY_LIBS) async_logger_improved.cc async_logger_lib_test_improved.cc -o $@
 
-arg_classifier_lib_test: arg_classifier.h arg_classifier_lib_test.cc $(GCC_HEADERS)
-	/usr/bin/g++ $(CXXFLAGS) $(LDFLAGS) $(GCC_FLAGS) $(GTESTLIBS) arg_classifier_lib_test.cc -o $@
+arg_classifier_lib_test: arg_classifier.h arg_classifier_lib_test.cc $(GCC_HEADERS) $(FOLLY_HEADERS)
+	/usr/bin/g++ $(CXXFLAGS) $(LDFLAGS) $(GCC_FLAGS) $(FOLLY_FLAGS) $(GTESTLIBS) $(FOLLY_LIBS) arg_classifier_lib_test.cc -o $@
 
 BINARY_LIST = async_logger_orig async_logger_lib_test_orig async_logger_improved async_logger_lib_test_improved
 

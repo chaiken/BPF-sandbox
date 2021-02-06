@@ -64,13 +64,15 @@ constexpr bool folly_sdt_parameters_are_all_valid(const char *, const char *,
 }
 
 template <typename T, typename... Pars>
-void maybe_insert_folly_sdt_probe(const char *progname, const char *probename,
+bool maybe_insert_folly_sdt_probe(const char *progname, const char *probename,
                                   T first, Pars... pars) {
   if (arg_classify::folly_sdt_parameters_are_all_valid(progname, probename,
                                                        first, pars...)) {
     FOLLY_SDT(progname, probename, first, pars);
+    return true;
   } else {
     std::cerr << "Probe is not JIT-compilable.";
+    return false;
   }
 }
 
