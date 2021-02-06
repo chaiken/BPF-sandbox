@@ -93,8 +93,9 @@ protected:
        https://github.com/chaiken/Cpp-exercises/blob/master/template_integrate_lib_test.cc
     */
     for (size_t idx = 0; idx < inputvec->size(); ++idx) {
-      EXPECT_NE(string::npos,
-                strCout->str().find("Interval: {0," + to_string(inputvec->at(idx)) + "}, Result: "));
+      EXPECT_NE(string::npos, strCout->str().find("Interval: {0," +
+                                                  to_string(inputvec->at(idx)) +
+                                                  "}, Result: "));
     }
 
     delete test1;

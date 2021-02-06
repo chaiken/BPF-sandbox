@@ -8,6 +8,8 @@
 
 #include "async_logger_improved.h"
 
+#include "arg_classifier.h"
+
 // Path is relative to the -I flags in the Makefile.
 #include "folly/tracing/StaticTracepoint.h"
 #include "template_integrate.h"
@@ -73,7 +75,10 @@ void async_logger::print_oldest_msg() {
   std::string front = queue_.front().second;
   std::cout << front << std::endl;
   queue_.pop();
-  FOLLY_SDT(async_logger_improved, operation_end, operationId, front.c_str());
+  if (arg_classify::folly_sdt_parameters_are_all_valid(
+          __FILE__, "operation_end", operationId, front.c_str())) {
+    FOLLY_SDT(__FILE__, operation_end, operationId, front.c_str());
+  }
 }
 
 // This function runs in a dedicated thread.

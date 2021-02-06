@@ -56,10 +56,29 @@ template <typename T> constexpr bool folly_sdt_parameter_is_invalid(T x) {
 
 // https://eli.thegreenplace.net/2014/variadic-templates-in-c/
 template <typename T, typename... Pars>
-constexpr bool folly_sdt_parameters_are_all_valid(T first, Pars... pars) {
+constexpr bool folly_sdt_parameters_are_all_valid(const char *, const char *,
+                                                  T first, Pars... pars) {
   return (!folly_sdt_parameter_is_invalid(first)) &&
          (!folly_sdt_parameter_is_invalid(pars...));
 }
+
+template <typename T, typename... Pars>
+void maybe_insert_folly_sdt_probe(const char *progname, const char *probename,
+                                  T first, Pars... pars) {
+  if (arg_classify::folly_sdt_parameters_are_all_valid(progname, probename,
+                                                       first, pars...)) {
+    FOLLY_SDT(progname, probename, first, pars...);
+  } else {
+    std::cerr << "Probe is not JIT-compilable.";
+  }
+}
+
+// StaticTracepoint-ELFx86.h:
+// Structure of note section for the probe.
+// #define FOLLY_SDT_NOTE_CONTENT(provider, name, has_semaphore, arg_template)
+//  FOLLY_SDT_ASM_STRING(provider)
+//  FOLLY_SDT_ASM_STRING(name)
+// First two arguments to FOLLY_SDT() macro therefore must be strings.
 
 } // namespace arg_classify
 
