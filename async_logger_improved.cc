@@ -8,6 +8,8 @@
 
 #include "async_logger_improved.h"
 
+#include "arg_classifier.h"
+
 // Path is relative to the -I flags in the Makefile.
 #include "template_integrate.h"
 
@@ -76,8 +78,14 @@ void async_logger::print_oldest_msg() {
   queue_.pop();
   // The names operation_start, operation_end and operationId are hard-coded
   // into the bcc/examples/usdt_sample/scripts/latency.py script.
-  FOLLY_SDT_WITH_SEMAPHORE(async_logger_improved, operation_end, operationId,
-                           front.c_str());
+  if (arg_classify::folly_sdt_parameters_are_all_valid(
+          __FILE__, "operation_end", operationId, front.c_str())) {
+    FOLLY_SDT_WITH_SEMAPHORE(async_logger_improved, operation_end, operationId,
+                             front.c_str());
+  } else {
+    std::cerr << "Probe is not JIT-compilable, line " << __LINE__ << std::endl;
+    exit(EXIT_FAILURE);
+  }
 }
 
 // This function runs in a dedicated thread.
@@ -98,9 +106,9 @@ void async_logger::run() {
 }
 
 // The thread used to print messages to standard output should be join()'ed in
-// the async_logger dtor so that it will be possible to wait for all messages to
-// be printed before the async_logger object is destructed.  After removing the
-// detach() statement from the async_logger() ctor, its body is empty.
+// the async_logger dtor so that it will be possible to wait for all messages
+// to be printed before the async_logger object is destructed.  After removing
+// the detach() statement from the async_logger() ctor, its body is empty.
 async_logger::~async_logger() {
   active_ = false;
   thread_.join();
@@ -109,15 +117,22 @@ async_logger::~async_logger() {
 
 // Queue for processing on the other thread.
 // http://www.cplusplus.com/reference/mutex/unique_lock/lock/
-// Calling lock on a mutex object that has already been locked by other threads
-// causes the current thread to block (wait) until it can own a lock to it.
+// Calling lock on a mutex object that has already been locked by other
+// threads causes the current thread to block (wait) until it can own a lock
+// to it.
 void async_logger::log(const std::string &str) {
   static std::uint64_t operationIdCounter(0);
 
   std::unique_lock<std::mutex> lock(mutex_);
   std::uint64_t operationId = operationIdCounter++;
-  FOLLY_SDT(async_logger_improved, operation_start, operationId, str.c_str());
-  queue_.emplace(std::pair<std::uint64_t, std::string>(operationId, str));
+  if (arg_classify::folly_sdt_parameters_are_all_valid(
+          __FILE__, "operation_end", operationId, str.c_str())) {
+    FOLLY_SDT(async_logger_improved, operation_start, operationId, str.c_str());
+    queue_.emplace(std::pair<std::uint64_t, std::string>(operationId, str));
+  } else {
+    std::cerr << "Probe is not JIT-compilable, line " << __LINE__ << std::endl;
+    exit(EXIT_FAILURE);
+  }
 }
 
 void async_logger::log(const double val) {
@@ -130,12 +145,18 @@ void async_logger::log(const double val) {
 
   std::unique_lock<std::mutex> lock(mutex_);
   std::uint64_t operationId = operationIdCounter++;
-  char input[MAX_DIGITS];
-  FOLLY_SDT(async_logger_improved, operation_start, operationId,
-            sprintf(input, "%e", val));
+  const std::string input{std::to_string(val)};
+  if (arg_classify::folly_sdt_parameters_are_all_valid(
+          __FILE__, "operation_end", operationId, input.c_str())) {
+    FOLLY_SDT(async_logger_improved, operation_start, operationId,
+              input.c_str());
+  } else {
+    std::cerr << "Probe is not JIT-compilable, line " << __LINE__ << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
-  // Moving these calculations inside the if block means that the program exits
-  // before I can start the tracer, which needs a PID.
+  // Moving these calculations inside the if block means that the program
+  // exits before I can start the tracer, which needs a PID.
   std::vector<double> interval(NUMPTS);
   interval.push_back(0.0);
   // Integrate y=x^3 over the interval {0,1} in val steps.
@@ -154,6 +175,7 @@ void async_logger::log(const double val) {
   std::string summary =
       "Interval: {0," + std::to_string(val) + "}, Result: " + result_str;
 
-  // str is going to be the integral of y=x^3 over the interval (0.0, val).
+  // str is going to be the integral of y=x^3 over the interval (0.0,
+  // val).
   queue_.emplace(std::pair<std::uint64_t, std::string>(operationId, summary));
 }

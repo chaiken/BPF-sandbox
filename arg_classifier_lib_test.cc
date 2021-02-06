@@ -173,18 +173,22 @@ TEST(ClassifierTest, Objects) {
 TEST(ClassifierTest, TwoParameters) {
   // Ints are valid.
   int a{1}, b{2};
-  EXPECT_TRUE(folly_sdt_parameters_are_all_valid(a, b));
+  EXPECT_TRUE(
+      folly_sdt_parameters_are_all_valid(__FILE__, "operation_start", a, b));
 
   // Strings are invalid.
   const std::string obvious{"Hello, world!"},
       lessobvious{"regardless of inclination"};
-  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(obvious, lessobvious));
+  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(__FILE__, "operation_start",
+                                                  obvious, lessobvious));
 
   // Cannot provide a string parameter no matter what.
-  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(b, obvious));
+  EXPECT_FALSE(folly_sdt_parameters_are_all_valid(__FILE__, "operation_start",
+                                                  b, obvious));
 
   // C-strings are okay.
-  EXPECT_TRUE(folly_sdt_parameters_are_all_valid(b, obvious.c_str()));
+  EXPECT_TRUE(folly_sdt_parameters_are_all_valid(__FILE__, "operation_start", b,
+                                                 obvious.c_str()));
 }
 
 } // namespace local_testing
