@@ -75,10 +75,8 @@ void async_logger::print_oldest_msg() {
   std::string front = queue_.front().second;
   std::cout << front << std::endl;
   queue_.pop();
-  if (arg_classify::folly_sdt_parameters_are_all_valid(
-          __FILE__, "operation_end", operationId, front.c_str())) {
-    FOLLY_SDT(__FILE__, operation_end, operationId, front.c_str());
-  }
+  arg_classify::maybe_insert_folly_sdt_probe(__FILE__, "operation_end",
+                                             operationId, front.c_str());
 }
 
 // This function runs in a dedicated thread.

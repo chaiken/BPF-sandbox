@@ -67,8 +67,8 @@ async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.c
 async_logger_lib_test_orig: async_logger_orig.h async_logger_orig.cc async_logger_lib_test_orig.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GTESTLIBS)  async_logger_orig.cc async_logger_lib_test_orig.cc -o $@
 
-async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
-	$(CC) $(CXXFLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(INTEGRATE_FLAGS) $(LDFLAGS) $(BPF_LIBS) $(FOLLY_LIBS) async_logger_improved.cc async_enqueue_improved.cc -o $@
+async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc arg_classifier.h $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS) $(GCC_HEADERS)
+	$(CC) $(CXXFLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(GCC_FLAGS) $(INTEGRATE_FLAGS) $(LDFLAGS) $(BPF_LIBS) $(FOLLY_LIBS) async_logger_improved.cc async_enqueue_improved.cc -o $@
 
 async_logger_improved_preprocessor_output: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
 	$(CC) $(CXXFLAGS) $(PREPROCESSOR_FLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(INTEGRATE_FLAGS) $(GCC_FLAGS) async_logger_improved.cc -o async_logger_improved.i
