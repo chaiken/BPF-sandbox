@@ -9,13 +9,14 @@
 #include "async_logger_improved.h"
 
 // Path is relative to the -I flags in the Makefile.
-#include "folly/tracing/StaticTracepoint.h"
 #include "template_integrate.h"
 
 #include <climits>
 
 #include <iostream>
 #include <string>
+
+FOLLY_SDT_DEFINE_SEMAPHORE(async_logger_improved, operation_end);
 
 namespace {
 constexpr int32_t MAX_DIGITS = 100;
@@ -73,7 +74,9 @@ void async_logger::print_oldest_msg() {
   std::string front = queue_.front().second;
   std::cout << front << std::endl;
   queue_.pop();
-  FOLLY_SDT(async_logger_improved, operation_end, operationId, front.c_str());
+  // The names operation_start, operation_end and operationId are hard-coded
+  // into the bcc/examples/usdt_sample/scripts/latency.py script.
+  FOLLY_SDT_WITH_SEMAPHORE(async_logger_improved, operation_end, operationId, front.c_str());
 }
 
 // This function runs in a dedicated thread.
@@ -128,14 +131,23 @@ void async_logger::log(const double val) {
   std::uint64_t operationId = operationIdCounter++;
   char input[MAX_DIGITS];
   FOLLY_SDT(async_logger_improved, operation_start, operationId,
-            sprintf(input, "%e", val));
+                           sprintf(input, "%e", val));
 
+  // Moving these calculations inside the if block means that the program exits
+  // before I can start the tracer, which needs a PID.
   std::vector<double> interval(NUMPTS);
   interval.push_back(0.0);
   // Integrate y=x^3 over the interval {0,1} in val steps.
   integration::CubeIt<double> generator_fn(*(interval.begin()), val / NUMPTS);
   std::generate(interval.begin(), interval.end(), generator_fn);
-  double result = integration::do_integrate<double>(interval);
+  double result;
+  // only perform the integration if a tracer is active
+  if (FOLLY_SDT_IS_ENABLED(async_logger_improved, operation_end)) {
+    std::cerr << "Integrating . . ." << std::endl;
+    result = integration::do_integrate<double>(interval);
+  } else {
+    result = 0.0;
+  }
   char result_str[MAX_DIGITS];
   sprintf(result_str, "%e", result);
   std::string summary =

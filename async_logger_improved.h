@@ -9,6 +9,9 @@
 #ifndef ASYNC_LOGGER_IMPROVED_H
 #define ASYNC_LOGGER_IMPROVED_H
 
+// Path is relative to the -I flags in the Makefile.
+#include "folly/tracing/StaticTracepoint.h"
+
 #include <atomic>
 #include <mutex>
 #include <queue>
