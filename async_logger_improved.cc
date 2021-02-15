@@ -11,7 +11,7 @@
 // Path is relative to the -I flags in the Makefile.
 #include "template_integrate.h"
 
-#include <climits>
+#include <values.h>
 
 #include <iostream>
 #include <string>
@@ -62,7 +62,7 @@ std::pair<bool, double> make_numeric(const std::string &arg) {
   retval.second = strtod(arg.c_str(), &endptr);
   // if endptr is the whole string, "No digits were found."
   if ((0 != errno) || (endptr == arg.c_str())) {
-    retval.second = INT_MAX;
+    retval.second = DBL_MAX;
     return retval;
   }
   retval.first = true;
@@ -76,7 +76,8 @@ void async_logger::print_oldest_msg() {
   queue_.pop();
   // The names operation_start, operation_end and operationId are hard-coded
   // into the bcc/examples/usdt_sample/scripts/latency.py script.
-  FOLLY_SDT_WITH_SEMAPHORE(async_logger_improved, operation_end, operationId, front.c_str());
+  FOLLY_SDT_WITH_SEMAPHORE(async_logger_improved, operation_end, operationId,
+                           front.c_str());
 }
 
 // This function runs in a dedicated thread.
@@ -131,7 +132,7 @@ void async_logger::log(const double val) {
   std::uint64_t operationId = operationIdCounter++;
   char input[MAX_DIGITS];
   FOLLY_SDT(async_logger_improved, operation_start, operationId,
-                           sprintf(input, "%e", val));
+            sprintf(input, "%e", val));
 
   // Moving these calculations inside the if block means that the program exits
   // before I can start the tracer, which needs a PID.
@@ -146,7 +147,7 @@ void async_logger::log(const double val) {
     std::cerr << "Integrating . . ." << std::endl;
     result = integration::do_integrate<double>(interval);
   } else {
-    result = 0.0;
+    result = DBL_MAX;
   }
   char result_str[MAX_DIGITS];
   sprintf(result_str, "%e", result);

@@ -2,13 +2,17 @@
 
 #include "gtest/gtest.h"
 
+#include <climits>
 #include <sys/types.h>
 #include <unistd.h>
+#include <values.h>
 
 #include <condition_variable>
 #include <iostream>
 
 using namespace std;
+
+FOLLY_SDT_DECLARE_SEMAPHORE(async_logger_improved, operation_end);
 
 // See $HOME/gitsrc/googletest/googletest/docs/advanced.html
 // https://stackoverflow.com/questions/4810516/c-redirecting-stdout
@@ -86,6 +90,7 @@ protected:
   }
   ~AsyncLoggerDoubleTest() {
     delete logger;
+    delete test1;
 
     /* Check output from async_logger thread.
        Numerical integration functions have their own tests in the Cpp-Exercises
@@ -96,9 +101,24 @@ protected:
       EXPECT_NE(string::npos, strCout->str().find("Interval: {0," +
                                                   to_string(inputvec->at(idx)) +
                                                   "}, Result: "));
+      const size_t result_start =
+          (strCout->str().find("Result: ") + strlen("Result: "));
+      const std::string calc_result{strCout->str().substr(result_start)};
+      // calc_num is 0.0 if the conversion fails.
+      double calc_num = strtod(calc_result.c_str(), nullptr);
+      // How to enable: start test in one console; in another attach a probe.
+      // For example,
+      // cd $(PATH TO BCC SOURCE)
+      // clang-format off
+      // sudo python3 examples/usdt_sample/scripts/latency.py -p=$(pidof async_logger_lib_test_improved)
+      // clang-format on
+      if (FOLLY_SDT_IS_ENABLED(async_logger_improved, operation_end)) {
+        // Comparing DBL_MAX does not work, because comparing doubles is stupid.
+        EXPECT_NE(1.797693e+308, calc_num);
+      } else {
+        EXPECT_EQ(1.797693e+308, calc_num);
+      }
     }
-
-    delete test1;
     EXPECT_NE(string::npos, strCout->str().find("testing thread 1"));
 
     /* Check for ctor log message. */
