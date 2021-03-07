@@ -144,7 +144,8 @@ TEST(ClassifierTest, Objects) {
   const std::chrono::duration<int> dur(5);
   EXPECT_EQ(record_type_class,
             _get_builtin_classification<std::chrono::duration<int>>(dur, true));
-  EXPECT_TRUE(folly_sdt_parameter_is_invalid(dur));
+  // Apparently duration decays to a POD.
+  EXPECT_FALSE(folly_sdt_parameter_is_invalid(dur));
 
   union aunion_type {
     double val;
@@ -167,7 +168,16 @@ TEST(ClassifierTest, Objects) {
   EXPECT_EQ(
       record_type_class,
       _get_builtin_classification<const struct astruct_type>(astruct, true));
-  EXPECT_TRUE(folly_sdt_parameter_is_invalid(astruct));
+  // A struct is a POD as long as it does not have a custom default constructor.
+  EXPECT_FALSE(folly_sdt_parameter_is_invalid(astruct));
+
+  struct bstruct_type {
+    bstruct_type() { val = 3; }
+    int val;
+    char first;
+  };
+  const struct bstruct_type bstruct;
+  EXPECT_TRUE(folly_sdt_parameter_is_invalid(bstruct));
 }
 
 TEST(ClassifierTest, TwoParameters) {
