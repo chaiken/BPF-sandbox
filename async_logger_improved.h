@@ -18,6 +18,8 @@
 #include <string>
 #include <thread>
 
+namespace alogger {
+
 constexpr uint32_t NUMPTS = 1e8;
 
 class async_logger {
@@ -48,5 +50,7 @@ public:
 };
 
 std::pair<bool, double> make_numeric(const std::string &arg);
+
+} // namespace alogger
 
 #endif

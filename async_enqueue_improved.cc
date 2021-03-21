@@ -29,14 +29,14 @@
 #include "async_logger_improved.h"
 
 int main(int argc, char **argv) {
-  async_logger logger;
+  alogger::async_logger logger;
   logger.log("main_thread\n");
   std::thread test1([&logger]() { logger.log("testing thread 1"); });
   // Skip over the application's name.
   for (int idx = 1; idx < argc; ++idx) {
     std::string not_a_number =
         "Argument " + std::to_string(idx) + " = " + argv[idx];
-    std::pair<bool, double> conversion = make_numeric(argv[idx]);
+    std::pair<bool, double> conversion = alogger::make_numeric(argv[idx]);
     if (conversion.first) {
       logger.log(conversion.second);
     } else {

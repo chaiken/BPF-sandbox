@@ -14,12 +14,15 @@ using namespace std;
 
 FOLLY_SDT_DECLARE_SEMAPHORE(async_logger_improved, operation_end);
 
+namespace async_logger {
+namespace local_test {
+
 // See $HOME/gitsrc/googletest/googletest/docs/advanced.html
 // https://stackoverflow.com/questions/4810516/c-redirecting-stdout
 class AsyncLoggerCharTest : public testing::TestWithParam<string> {
 protected:
   AsyncLoggerCharTest()
-      : logger(new async_logger), inputstr(new string),
+      : logger(new alogger::async_logger), inputstr(new string),
         oldCoutStreamBuf(cout.rdbuf()), strCout(new ostringstream) {
     cout.rdbuf(strCout->rdbuf());
     logger->log("main_thread");
@@ -48,7 +51,7 @@ protected:
     delete inputstr;
   }
 
-  async_logger *logger;
+  alogger::async_logger *logger;
   thread *test1;
   string *inputstr;
 
@@ -79,7 +82,7 @@ INSTANTIATE_TEST_SUITE_P(HereAreSomeChars, AsyncLoggerCharTest,
 class AsyncLoggerDoubleTest : public testing::TestWithParam<vector<double>> {
 protected:
   AsyncLoggerDoubleTest()
-      : logger(new async_logger), inputvec(new vector<double>),
+      : logger(new alogger::async_logger), inputvec(new vector<double>),
         oldCoutStreamBuf(cout.rdbuf()), strCout(new ostringstream) {
     cout.rdbuf(strCout->rdbuf());
     // Print out PID for use with USDT tracing tools following
@@ -131,7 +134,7 @@ protected:
     delete inputvec;
   }
 
-  async_logger *logger;
+  alogger::async_logger *logger;
   thread *test1;
   vector<double> *inputvec;
 
@@ -155,3 +158,5 @@ const array<double, 4u> b({123.0, 0.123, -11.236, 41.8});
 INSTANTIATE_TEST_SUITE_P(HereAreSomeNumbers, AsyncLoggerDoubleTest,
                          testing::Values(vector<double>(a.begin(), a.end()),
                                          vector<double>(b.begin(), b.end())));
+} // namespace local_test
+} // namespace async_logger

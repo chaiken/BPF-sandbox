@@ -20,6 +20,8 @@
 
 FOLLY_SDT_DEFINE_SEMAPHORE(async_logger_improved, operation_end);
 
+namespace alogger {
+
 namespace {
 constexpr int32_t MAX_DIGITS = 100;
 } // namespace
@@ -179,3 +181,5 @@ void async_logger::log(const double val) {
   // val).
   queue_.emplace(std::pair<std::uint64_t, std::string>(operationId, summary));
 }
+
+} // namespace alogger
