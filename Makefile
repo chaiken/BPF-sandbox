@@ -48,10 +48,12 @@ INTEGRATE_FLAGS= -I$(CPP_SRC_DIR)
 PREPROCESSOR_FLAGS= -CC -C -E
 GCC_FLAGS= -I$(GCC_HEADERS)
 
-LDFLAGS= -ggdb -g -fsanitize=address -L$(GTESTLIBPATH) -lpthread
-LDFLAGS-NOSANITIZE= -ggdb -g -L$(GTESTLIBPATH) -lpthread
-LDFLAGS-NOTEST= -ggdb -g -fsanitize=address -lpthread
-#LDFLAGS= -ggdb -g -L$(GTESTLIBPATH) -lpthread
+# DO NOT put '-lm' or '-lpthread' here.   Libraries must be listed after source
+# files due to newly applied 'as-needed' flag:
+#https://bbs.archlinux.org/viewtopic.php?id=156639
+LDFLAGS= -ggdb -g -fsanitize=address -L$(GTESTLIBPATH) -L$(FOLLYLIBPATH)
+LDFLAGS-NOSANITIZE= -ggdb -g -L$(GTESTLIBPATH)
+LDFLAGS-NOTEST= -ggdb -g -fsanitize=address
 #THREADFLAGS= -D_REENTRANT -I/usr/include/ntpl -L/usr/lib/nptl -lpthread
 THREADFLAGS= -D_REENTRANT -lpthread
 #https://gcc.gnu.org/ml/gcc-help/2003-08/msg00128.html
@@ -65,16 +67,16 @@ async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.c
 	$(CC) $(CXXFLAGS) $(LDFLAGS) async_logger_orig.cc async_enqueue_orig.cc -o $@
 
 async_logger_lib_test_orig: async_logger_orig.h async_logger_orig.cc async_logger_lib_test_orig.cc
-	$(CC) $(CXXFLAGS) $(LDFLAGS) async_logger_orig.cc async_logger_lib_test_orig.cc $(GTESTLIBS)   -o $@
+	$(CC) $(CXXFLAGS) $(LDFLAGS) async_logger_orig.cc async_logger_lib_test_orig.cc $(GTESTLIBS) -o $@
 
 async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
-	$(CC) $(CXXFLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(GCC_FLAGS) $(INTEGRATE_FLAGS) $(LDFLAGS) $(BPF_LIBS) $(FOLLY_LIBS) async_logger_improved.cc async_enqueue_improved.cc -o $@
+	$(CC) $(CXXFLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(GCC_FLAGS) $(INTEGRATE_FLAGS) $(LDFLAGS) async_logger_improved.cc async_enqueue_improved.cc $(BPF_LIBS) $(FOLLY_LIBS) -o $@
 
 async_logger_improved_preprocessor_output: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
 	$(CC) $(CXXFLAGS) $(PREPROCESSOR_FLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(INTEGRATE_FLAGS) $(GCC_FLAGS) async_logger_improved.cc -o async_logger_improved.i
 
 async_logger_lib_test_improved: async_logger_improved.h async_logger_improved.cc async_logger_lib_test_improved.cc arg_classifier.h $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(FOLLY_FLAGS)  $(INTEGRATE_FLAGS) $(GCC_FLAGS) $(FOLLY_LIBS) async_logger_improved.cc async_logger_lib_test_improved.cc $(GTESTLIBS) -o $@
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(FOLLY_FLAGS)  $(INTEGRATE_FLAGS) $(GCC_FLAGS) async_logger_improved.cc async_logger_lib_test_improved.cc $(GTESTLIBS) $(FOLLY_LIBS) -o $@
 
 arg_classifier_lib_test: arg_classifier.h arg_classifier_lib_test.cc $(GCC_HEADERS)
 	$(CC) $(CXXFLAGS) $(LDFLAGS) $(GCC_FLAGS) arg_classifier_lib_test.cc $(GTESTLIBS) -o $@
