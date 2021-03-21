@@ -1,10 +1,10 @@
-# See ~/gitsrc/googletest/googletest/make/Makefile
+# See ~/gitsrc/googletest/googletest/build/Makefile
 # Points to the root of Google Test, relative to where this file is.
 # Remember to tweak this if you move this file.
-GTEST_DIR = $(HOME)/gitsrc/googletest/googletest
+GTEST_DIR = $(HOME)/gitsrc/googletest
 # Wrong: do not include $(GTEST_DIR)/include/gtest/internal/*.h
-GTEST_HEADERS = $(GTEST_DIR)/include
-GTESTLIBPATH=$(GTEST_DIR)/make
+GTEST_HEADERS = $(GTEST_DIR)/googletest/include
+GTESTLIBPATH=$(GTEST_DIR)/build/lib
 # See ~/gitsrc/googletest/googletest/README.md.
 # export GTEST_DIR=/home/alison/gitsrc/googletest/
 # g++ -std=c++17 -isystem ${GTEST_DIR}/include -I${GTEST_DIR} -pthread -c ${GTEST_DIR}/src/gtest-all.cc
