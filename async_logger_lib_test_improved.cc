@@ -12,10 +12,10 @@
 
 using namespace std;
 
-FOLLY_SDT_DECLARE_SEMAPHORE(async_logger_improved, operation_end);
-
 namespace async_logger {
 namespace local_test {
+
+FOLLY_SDT_DECLARE_SEMAPHORE(async_logger_improved, operation_end);
 
 // See $HOME/gitsrc/googletest/googletest/docs/advanced.html
 // https://stackoverflow.com/questions/4810516/c-redirecting-stdout

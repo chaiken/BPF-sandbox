@@ -18,9 +18,9 @@
 #include <iostream>
 #include <string>
 
-FOLLY_SDT_DEFINE_SEMAPHORE(async_logger_improved, operation_end);
-
 namespace alogger {
+
+FOLLY_SDT_DEFINE_SEMAPHORE(async_logger_improved, operation_end);
 
 namespace {
 constexpr int32_t MAX_DIGITS = 100;
