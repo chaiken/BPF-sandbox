@@ -51,7 +51,7 @@ GCC_FLAGS= -I$(GCC_HEADERS)
 # DO NOT put '-lm' or '-lpthread' here.   Libraries must be listed after source
 # files due to newly applied 'as-needed' flag:
 #https://bbs.archlinux.org/viewtopic.php?id=156639
-LDFLAGS= -ggdb -g -fsanitize=address -L$(GTESTLIBPATH) -L$(FOLLYLIBPATH)
+LDFLAGS= -ggdb -g -fsanitize=address -L$(GTESTLIBPATH) -L$(FOLLY_LIB_PATH)
 LDFLAGS-NOSANITIZE= -ggdb -g -L$(GTESTLIBPATH)
 LDFLAGS-NOTEST= -ggdb -g -fsanitize=address
 #THREADFLAGS= -D_REENTRANT -I/usr/include/ntpl -L/usr/lib/nptl -lpthread
