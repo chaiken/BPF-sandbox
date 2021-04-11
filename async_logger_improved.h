@@ -12,7 +12,10 @@
 // Path is relative to the -I flags in the Makefile.
 #include "folly/tracing/StaticTracepoint.h"
 
+#include <link.h>
+
 #include <atomic>
+#include <iostream>
 #include <mutex>
 #include <queue>
 #include <string>
@@ -30,6 +33,7 @@ class async_logger {
   std::queue<std::pair<uint64_t, std::string>> queue_;
   // Synchronize access to the queue_ data member.
   std::mutex mutex_;
+  uint64_t pie_offset_ = 0u;
 
   std::thread thread_{[this]() { run(); }};
   // The log messages printing code can be extracted into a separate member
@@ -40,6 +44,25 @@ class async_logger {
   void run();
 
 public:
+  async_logger() {
+    // Copied from
+    // https://github.com/facebook/folly/blob/master/folly/experimental/symbolizer/detail/Debug.h
+    struct r_debug *rendezvous_structp = &_r_debug;
+    if (nullptr == rendezvous_structp) {
+      std::cerr << "Could not read dynamic linker information." << std::endl;
+    } else {
+      struct link_map *loaded_objects = rendezvous_structp->r_map;
+      if (nullptr == loaded_objects) {
+        std::cerr << "Dynamic linker object map unavailable" << std::endl;
+      } else {
+        /* Difference between the address in the ELF
+          file and the addresses in memory.  */
+        pie_offset_ = loaded_objects->l_addr;
+        std::cerr << "PIE offset is " << std::hex << "0x"
+                  << loaded_objects->l_addr << std::endl;
+      }
+    }
+  }
   // The thread used to print messages to standard output should not be
   // detach();ed in the async_logger ctor. After removing the
   // detach() statement from the async_logger() ctor, its body is empty.

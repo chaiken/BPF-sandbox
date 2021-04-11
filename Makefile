@@ -59,8 +59,8 @@ THREADFLAGS= -D_REENTRANT -lpthread
 #https://gcc.gnu.org/ml/gcc-help/2003-08/msg00128.html
 DEADCODESTRIP := -Wl,-static -fvtable-gc -fdata-sections -ffunction-sections -Wl,--gc-sections -Wl,-s
 # gcc and clang won't automatically link .cc files against the standard library.
-#CC=/usr/bin/g++
-CC=/usr/bin/clang++
+CC=/usr/bin/g++
+#CC=/usr/bin/clang++
 LIBWR=-Llibwr -lwr
 
 async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.cc
@@ -69,6 +69,11 @@ async_logger_orig: async_logger_orig.h async_logger_orig.cc async_enqueue_orig.c
 async_logger_lib_test_orig: async_logger_orig.h async_logger_orig.cc async_logger_lib_test_orig.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) async_logger_orig.cc async_logger_lib_test_orig.cc $(GTESTLIBS) -o $@
 
+# GCC: /usr/bin/ld: /tmp/ccpyqjU0.o: relocation R_X86_64_32 against symbol `__pthread_key_create@@GLIBC_2.2.5' can not be used when making a PIE object; recompile with -fPIE
+#	$(CC) $(CXXFLAGS) -fno-pie $(BPF_FLAGS) $(FOLLY_FLAGS) $(GCC_FLAGS) $(INTEGRATE_FLAGS) $(LDFLAGS) async_logger_improved.cc async_enqueue_improved.cc $(BPF_LIBS) $(FOLLY_LIBS) -o $@
+# -fpie flag has no effect:
+#   with GCC, the binaries are PIE with or without it;
+#   with clang, binaries are not PIE either way.
 async_logger_improved: async_logger_improved.h async_logger_improved.cc async_enqueue_improved.cc $(BPF_HEADERS) $(FOLLY_HEADERS) $(INTEGRATE_HEADERS)
 	$(CC) $(CXXFLAGS) $(BPF_FLAGS) $(FOLLY_FLAGS) $(GCC_FLAGS) $(INTEGRATE_FLAGS) $(LDFLAGS) async_logger_improved.cc async_enqueue_improved.cc $(BPF_LIBS) $(FOLLY_LIBS) -o $@
 

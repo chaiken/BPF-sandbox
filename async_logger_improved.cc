@@ -105,6 +105,10 @@ void async_logger::run() {
   while (!queue_.empty()) {
     print_oldest_msg();
   }
+  std::cerr << "Address of semaphore is " << std::hex << "0x"
+            << (uintptr_t)((void *)&FOLLY_SDT_SEMAPHORE(async_logger_improved,
+                                                        operation_end))
+            << std::endl;
 }
 
 // The thread used to print messages to standard output should be join()'ed in
