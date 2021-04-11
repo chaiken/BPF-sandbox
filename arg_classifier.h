@@ -47,8 +47,9 @@ constexpr int _get_builtin_classification(T x, bool verbose = false) {
 }
 
 // Determine if the BPF JIT will accept a Folly userspace static tracepoint with
-// the provided data type.  Rely on the compiler's __builtin_classify_type()
-// since Facebook's library does, at least for x86_64.
+// the provided data type.  Formerly relied on GCC's
+// __builtin_classify_type() since Facebook's library does, at least for x86_64.
+// However, in C++, std::is_pod() produces the same result.
 template <typename T> constexpr bool folly_sdt_parameter_is_invalid(T /*x*/) {
   return ((!std::is_pod<T>::value) && (!std::is_array<T>::value));
 }
