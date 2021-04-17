@@ -105,9 +105,9 @@ void async_logger::run() {
   while (!queue_.empty()) {
     print_oldest_msg();
   }
-  std::cerr << "Address of semaphore is " << std::hex << "0x"
+  std::cerr << "Offset of semaphore is " << std::hex << "0x"
             << (uintptr_t)((void *)&FOLLY_SDT_SEMAPHORE(async_logger_improved,
-                                                        operation_end))
+                                                        operation_end)) - pie_offset_
             << std::endl;
 }
 
