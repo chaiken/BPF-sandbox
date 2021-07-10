@@ -21,6 +21,67 @@
 namespace arg_classify {
 namespace local_testing {
 
+union aunion_type {
+  double val;
+  int first;
+  int second;
+};
+
+struct astruct_type {
+  int val;
+  char first;
+  char second;
+  char third;
+  char fourth;
+};
+
+struct bstruct_type {
+  bstruct_type() : val(3), first('a') {}
+  bstruct_type(int a, char b) : val(a), first(b) {}
+  // clang-format off
+  //  bstruct_type(const struct bstruct_type& b) : val(b.val),  first(b.first) {}
+  // clang-format on
+  int val;
+  char first;
+};
+
+TEST(TypeErasureTest, Basic) {
+  std::vector<Parameter> param_list;
+  param_list.push_back(Parameter(42));
+  // Without the explicit string constructor, the function receives the
+  // parameter as a constr char* and emits an array about pushing an array.
+  param_list.push_back(Parameter(std::string("hello world")));
+
+  union aunion_type u {};
+  param_list.push_back(Parameter(u));
+  struct astruct_type a {};
+  param_list.push_back(Parameter(a));
+  struct bstruct_type b {
+    11, 'b'
+  };
+  param_list.push_back(Parameter(b));
+  //  param_list.push_back(Parameter(union aunion_type a()));
+
+  std::vector<Parameter>::iterator it = std::begin(param_list);
+  EXPECT_EQ(integer_type_class, it->get_classification());
+  // error: no matching function for call to
+  // ‘arg_classify::Parameter::get_outer_parameter()’ couldn’t deduce template
+  // parameter ‘T'
+  //  EXPECT_EQ(42, *(it->get_outer_parameter()));
+  it++;
+  // std::string
+  EXPECT_EQ(record_type_class, it->get_classification());
+  it++;
+  // union
+  EXPECT_EQ(union_type_class, it->get_classification());
+  it++;
+  // simple struct
+  EXPECT_EQ(record_type_class, it->get_classification());
+  it++;
+  // struct with ctor
+  EXPECT_EQ(record_type_class, it->get_classification());
+}
+
 TEST(ClassifierTest, Ints) {
   int val{1};
   std::cout << "Int: ";
@@ -147,23 +208,11 @@ TEST(ClassifierTest, Objects) {
   // Apparently duration decays to a POD.
   EXPECT_FALSE(folly_sdt_parameter_is_invalid(dur));
 
-  union aunion_type {
-    double val;
-    int first;
-    int second;
-  };
   const union aunion_type aunion {};
   EXPECT_EQ(union_type_class,
             _get_builtin_classification<const union aunion_type>(aunion, true));
   EXPECT_FALSE(folly_sdt_parameter_is_invalid(aunion));
 
-  struct astruct_type {
-    int val;
-    char first;
-    char second;
-    char third;
-    char fourth;
-  };
   const struct astruct_type astruct {};
   EXPECT_EQ(
       record_type_class,
@@ -171,11 +220,6 @@ TEST(ClassifierTest, Objects) {
   // A struct is a POD as long as it does not have a custom default constructor.
   EXPECT_FALSE(folly_sdt_parameter_is_invalid(astruct));
 
-  struct bstruct_type {
-    bstruct_type() { val = 3; }
-    int val;
-    char first;
-  };
   const struct bstruct_type bstruct;
   EXPECT_TRUE(folly_sdt_parameter_is_invalid(bstruct));
 }

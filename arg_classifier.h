@@ -9,6 +9,7 @@
 
 #include <cxxabi.h>
 #include <iostream>
+#include <memory>
 #include <type_traits>
 #include <typeinfo>
 
@@ -45,6 +46,50 @@ constexpr int _get_builtin_classification(T x, bool verbose = false) {
   }
   return type_class;
 }
+
+// https://www.cplusplus.com/articles/oz18T05o/
+class Parameter {
+public:
+  template <typename T>
+  Parameter(const T &par) : outer_parameter(new ParameterModel<T>(par)) {}
+  int get_classification() const {
+    return outer_parameter->get_classification();
+  }
+  // clang-format off
+  // error: use of ‘auto arg_classify::Parameter::ParameterConcept::get_inner_parameter() const’
+  // before deduction of ‘auto’
+  // 62 |     return  outer_parameter->get_inner_parameter();
+  // auto get_outer_parameter() const {
+  // clang-format on
+  //
+  // Compiles, but how to make template type deduction work from actual code?
+  template <typename T> T get_outer_parameter() const {
+    return outer_parameter->get_inner_parameter();
+  }
+
+private:
+  // ParameterConcept and ParameterModel are private members of Parameter.
+  struct ParameterConcept {
+    virtual ~ParameterConcept() {}
+    virtual int get_classification() const = 0;
+    auto get_inner_parameter() const;
+  };
+
+  template <typename T> struct ParameterModel : ParameterConcept {
+    ParameterModel(const T &t) : inner_parameter(t) {}
+    virtual ~ParameterModel() {}
+    // There is no reason for this function to be virtual.
+    int get_classification() const {
+      return _get_builtin_classification<T>(inner_parameter);
+    }
+    T get_inner_parameter() const { return inner_parameter; }
+
+  private:
+    T inner_parameter;
+  };
+  // Not boost::shared_ptr as at cplusplus.com.
+  std::shared_ptr<ParameterConcept> outer_parameter;
+};
 
 // Determine if the BPF JIT will accept a Folly userspace static tracepoint with
 // the provided data type.  Formerly relied on GCC's
