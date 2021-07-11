@@ -52,6 +52,8 @@ TEST(TypeErasureTest, Basic) {
   // parameter as a constr char* and emits an array about pushing an array.
   param_list.push_back(Parameter(std::string("hello world")));
 
+  // Passing these more complex data types as temporary rvalue objects fails
+  // compilation, presumably because the copy ctor wants an lvalue reference.
   union aunion_type u {};
   param_list.push_back(Parameter(u));
   struct astruct_type a {};
@@ -80,6 +82,15 @@ TEST(TypeErasureTest, Basic) {
   it++;
   // struct with ctor
   EXPECT_EQ(record_type_class, it->get_classification());
+}
+
+TEST(TypeErasureTest, ParameterValidator) {
+  // Ints are valid.
+  std::vector<Parameter> parvec{Parameter(1), Parameter(2)};
+  EXPECT_TRUE(all_folly_sdt_parameters_are_valid(parvec));
+  std::vector<Parameter> parvec2{Parameter(1),
+                                 Parameter(std::string("Hello, world!"))};
+  EXPECT_FALSE(all_folly_sdt_parameters_are_valid(parvec2));
 }
 
 TEST(ClassifierTest, Ints) {

@@ -12,6 +12,7 @@
 #include <memory>
 #include <type_traits>
 #include <typeinfo>
+#include <vector>
 
 namespace arg_classify {
 
@@ -55,11 +56,18 @@ public:
   int get_classification() const {
     return outer_parameter->get_classification();
   }
+  bool is_valid_sdt_parameter() const {
+    return outer_parameter->is_valid_sdt_parameter();
+  }
   // clang-format off
   // error: use of ‘auto arg_classify::Parameter::ParameterConcept::get_inner_parameter() const’
   // before deduction of ‘auto’
   // 62 |     return  outer_parameter->get_inner_parameter();
   // auto get_outer_parameter() const {
+  //
+  // error: use of ‘auto arg_classify::Parameter::ParameterConcept::get_inner_parameter() const’
+  // before deduction of ‘auto’
+  // decltype(auto) get_outer_parameter() const {
   // clang-format on
   //
   // Compiles, but how to make template type deduction work from actual code?
@@ -72,6 +80,7 @@ private:
   struct ParameterConcept {
     virtual ~ParameterConcept() {}
     virtual int get_classification() const = 0;
+    virtual bool is_valid_sdt_parameter() const = 0;
     auto get_inner_parameter() const;
   };
 
@@ -79,17 +88,32 @@ private:
     ParameterModel(const T &t) : inner_parameter(t) {}
     virtual ~ParameterModel() {}
     // There is no reason for this function to be virtual.
-    int get_classification() const {
+    constexpr int get_classification() const {
       return _get_builtin_classification<T>(inner_parameter);
+    }
+    constexpr bool is_valid_sdt_parameter() const {
+      return ((std::is_pod<T>::value) || (std::is_array<T>::value));
     }
     T get_inner_parameter() const { return inner_parameter; }
 
   private:
     T inner_parameter;
   };
+
   // Not boost::shared_ptr as at cplusplus.com.
   std::shared_ptr<ParameterConcept> outer_parameter;
 };
+
+bool all_folly_sdt_parameters_are_valid(const std::vector<Parameter> &vec) {
+  for (auto x : vec) {
+    if (!x.is_valid_sdt_parameter()) {
+      std::cout << "Invalid parameter is of type "
+                << type_names[x.get_classification()] << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
 
 // Determine if the BPF JIT will accept a Folly userspace static tracepoint with
 // the provided data type.  Formerly relied on GCC's
