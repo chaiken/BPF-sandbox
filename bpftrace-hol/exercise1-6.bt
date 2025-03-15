@@ -1,0 +1,26 @@
+#!/usr/bin/bpftrace
+
+BEGIN
+{
+  @loops = 0;
+}
+
+profile:ms:10 /uid !=0/
+{
+   @loops++;
+   @threads_this_cpu[cpu] = count();
+   $ctr = 0;
+   while ($ctr++ < 8) {
+     if (@threads_this_cpu[$ctr] > 0) {
+       printf("CPU %u\t thread_count %u\n", cpu, (uint16)@threads_this_cpu[$ctr]);
+     }
+   }
+   if (10 < @loops) {
+     exit();
+   }
+}
+
+END
+{
+   delete(@loops);
+}

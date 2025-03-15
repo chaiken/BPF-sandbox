@@ -1,0 +1,50 @@
+#!/usr/bin/bpftrace
+
+// Run with
+// $ sudo ./exercise1-5.bt $(pgrep SOME_PROCESS)
+
+BEGIN
+{
+   // ERROR: Cannot cast from "none" to "uint32"
+   // @convert_to_ms = (uint32)0.000001;
+   @traced_pid = (uint32)$1;
+   // Call max() and min() in initialization in order get types right.
+   // bpftrace: ./src/types.h:311: const std::string bpftrace::SizedType::GetName() const: Assertion `IsRecordTy() || IsEnumTy()' failed.
+   // @max_elapsed = (max_t)0;
+   @max_elapsed = max(0);
+   @min_elapsed = min(2e9);
+   printf("Tracing PID %u\n", @traced_pid);
+}
+
+tracepoint:syscalls:sys_enter_poll /pid==@traced_pid/
+{
+  @start[tid] = nsecs;
+}
+
+tracepoint:syscalls:sys_exit_poll /@start[tid] != 0/
+{
+  if (0 != @elapsed[tid]) {
+      printf("tid %u execution took %d ns\n", tid, @elapsed[tid]);
+  }
+  if (nsecs > @elapsed[tid]) {
+    // ERROR: syntax error, unexpected identifier, expecting ; or }
+    // @elapsed[tid] = 1e-6*(nsecs - @start[tid]);
+    @elapsed[tid] = nsecs - @start[tid];
+    @distribution[tid] = hist(@elapsed[tid]);
+    @avg_elapsed = avg(@elapsed[tid]);
+    // Print the userspace stack every time the previous maximum elapsed time
+    // is exceeded.
+    if (@elapsed[tid] > (uint64)@max_elapsed) {
+       printf("%s\n", ustack());
+    }
+    @max_elapsed = max(@elapsed[tid]);
+    @min_elapsed = min(@elapsed[tid]);
+  }
+}
+
+END
+{
+  delete(@traced_pid);
+  delete(@start[tid]);
+  delete(@elapsed[tid]);
+}

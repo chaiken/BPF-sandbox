@@ -1,0 +1,21 @@
+#!/usr/bin/bpftrace
+
+BEGIN
+{
+  printf("Tracing pid %u\n", $1);
+  @ctr = 0;
+}
+
+tracepoint:syscalls:sys_enter_* /pid == $1/
+{
+  @calls[pid, tid, comm] = count();
+}
+
+interval:s:3
+{
+   @ctr++;
+   print(@calls);
+   printf("\n");
+   clear(@calls);
+   if (@ctr > 3) {exit();}
+}

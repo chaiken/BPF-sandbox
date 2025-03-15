@@ -1,0 +1,6 @@
+#!/usr/bin/bpftrace
+
+tracepoint:syscalls:sys_enter_close /comm == "kwin_wayland"/
+{
+  @calls[ustack] = count();
+}

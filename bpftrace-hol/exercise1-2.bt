@@ -1,0 +1,19 @@
+#!/usr/bin/bpftrace
+
+BEGIN
+{
+   @ctr = 1;
+}
+
+tracepoint:syscalls:sys_enter_get* {
+   @calls[comm]++;
+}
+
+interval:s:1 {
+   printf("%u\n",@ctr);
+   if (@ctr > 2) { exit();}
+
+   print(@calls, 10);
+   clear(@calls);
+   @ctr++;
+}
