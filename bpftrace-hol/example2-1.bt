@@ -1,0 +1,12 @@
+#!/usr/bin/bpftrace
+
+config = {
+  max_strlen = 32768; /* 32KB - max string size */
+}
+
+/* fd 2 might not be a processes stderr but it's good fun nonetheless */
+tracepoint:syscalls:sys_enter_write
+/args.fd == 2/
+{
+        printf("%s: %s\n", comm,  str(args.buf));
+}

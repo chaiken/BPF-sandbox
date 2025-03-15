@@ -1,0 +1,9 @@
+#!/usr/bin/bpftrace
+// Notably there is no sys_exit_enter.
+// Nothing appears to hit this tracepoint.
+
+tracepoint:syscalls:sys_exit_exit
+{
+    @ustack[pid] = count();
+    printf("Pid %u is existing with retval %ld\n", pid, args->ret);
+}
