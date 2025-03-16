@@ -1,0 +1,32 @@
+       int close(int fd);
+       void *mmap(void addr[.length], size_t length, int prot, int flags,
+                  int fd, off_t offset);
+       ssize_t write(int fd, const void buf[.count], size_t count);
+
+$ sudo bpftrace -lv fentry:vmlinux:__x64_sys_close
+fentry:vmlinux:__x64_sys_close
+    const struct pt_regs * regs
+    long int retval
+
+$ sudo bpftrace -lv fentry:vmlinux:__x64_sys_mmap
+fentry:vmlinux:__x64_sys_mmap
+    const struct pt_regs * regs
+    long int retval
+
+$ sudo bpftrace -lv fentry:vmlinux:__x64_sys_write
+fentry:vmlinux:__x64_sys_write
+    const struct pt_regs * regs
+    long int retval
+
+
+$ sudo grep -rI sys_mmap /sys/kernel/debug/tracing/ 2>/dev/null
+/sys/kernel/debug/tracing/available_filter_functions_addrs:ffffffff99e48124 __x64_sys_mmap
+/sys/kernel/debug/tracing/available_filter_functions_addrs:ffffffff99e48174 __ia32_sys_mmap
+/sys/kernel/debug/tracing/available_filter_functions_addrs:ffffffff9a17f754 ksys_mmap_pgoff
+/sys/kernel/debug/tracing/available_filter_functions_addrs:ffffffff9a17f944 __x64_sys_mmap_pgoff
+/sys/kernel/debug/tracing/available_filter_functions_addrs:ffffffff9a17f984 __ia32_sys_mmap_pgoff
+/sys/kernel/debug/tracing/available_filter_functions:__x64_sys_mmap
+/sys/kernel/debug/tracing/available_filter_functions:__ia32_sys_mmap
+/sys/kernel/debug/tracing/available_filter_functions:ksys_mmap_pgoff
+/sys/kernel/debug/tracing/available_filter_functions:__x64_sys_mmap_pgoff
+/sys/kernel/debug/tracing/available_filter_functions:__ia32_sys_mmap_pgoff

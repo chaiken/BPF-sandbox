@@ -1,0 +1,46 @@
+#!/usr/bin/bpftrace
+
+#include <linux/mman.h>
+
+BEGIN
+{
+    @cycles = 0;
+    @shared_maps = (uint32)0;
+    @private_maps = (uint32)0;
+    @allocations[comm] = (uint32)0;
+}
+
+tracepoint:syscalls:sys_enter_mmap / uid !=0 /
+{
+    @mappers[comm] = count();
+    @allocations[comm] += args->len/1000;
+    if (args->flags & MAP_SHARED) {
+        @shared_maps++;
+    }
+    if(args->flags & MAP_PRIVATE) {
+       @private_maps++;
+    }
+    printf("%s: %u allocations of %u kB total\n", comm, (uint32)@mappers[comm], (uint32)@allocations[comm]);
+    @alloc_dist[comm] = hist(@allocations[comm]);
+}
+
+interval:s:3
+{
+   @cycles++;
+   if (0 != @shared_maps) {
+       // ERROR: Cannot resolve unknown type "float"
+       // $ratio = ((double)@private_maps[0])/((double)@shared_maps[0]);
+       printf("\nRatio of private to shared maps is %u\n\n", @private_maps/@shared_maps);
+   } else {
+       printf("%lu private mappings and no shared.\n\n", @private_maps);
+   }
+   clear(@mappers);
+   if (@cycles > 10) {exit();}
+}
+
+END
+{
+   delete(@cycles);
+   delete(@mappers,comm);
+   delete(@allocations,comm);
+}
