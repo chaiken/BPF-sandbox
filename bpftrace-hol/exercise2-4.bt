@@ -1,0 +1,19 @@
+#!/usr/bin/bpftrace
+
+/*
+Run invalid-closes in another shell.
+
+$ sudo bpftrace-hol/exercise2-4.bt
+Attaching 1 probe...
+close reported error Bad file descriptor
+*/
+
+tracepoint:syscalls:sys_exit_close
+{
+    if (args->ret != 0) {
+        /* Next two lines stolen from Brendan Gregg's opensnoop.bt. */
+	$ret = args->ret;
+	$errno = $ret >= 0 ? 0 : - $ret;
+        printf("close() reported error %s\n", strerror($errno));
+    }
+}
