@@ -1,0 +1,25 @@
+#!/usr/bin/bpftrace
+
+#include <linux/fcntl.h>
+
+/* Minutes go by without any calls to open() itself. */
+
+tracepoint:syscalls:sys_enter_openat
+{
+   /* Capturing filename as an int means that it can be used in a filter. */
+   if (args->flags & O_TMPFILE) {
+      @opened[pid] = args->filename;
+   }
+}
+
+tracepoint:syscalls:sys_enter_openat
+/ @opened[pid] /
+{
+    printf("PID %u with comm %s opened temporary file %s\n", pid, comm, str(@opened[pid]));
+    clear(@opened);
+}
+
+END
+{
+    delete(@opened[pid]);
+}
