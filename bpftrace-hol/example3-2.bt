@@ -1,0 +1,35 @@
+#!/usr/bin/bpftrace
+
+/*
+
+$ sudo bpftrace -lv 'kretfunc:fget'
+fexit:vmlinux:fget
+    unsigned int fd
+    struct file * retval
+
+$ sudo ./example3-2.bt
+./example3-2.bt:14:8-65: WARNING: length param (128) is too long and will be shortened to 64 bytes (see BPFTRACE_MAX_STRLEN)
+    if (strcontains(str(retval->f_path.dentry->d_name.name, 128), "libstdc++")) {
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Attaching 1 probe...
+condvar-stl_lib (fd3): libstdc++.so.6.0.33
+condvar-stl_lib (fd3): libstdc++.so.6.0.33
+condvar-stl_lib (fd3): libstdc++.so.6.0.33
+condvar-stl_lib (fd3): libstdc++.so.6.0.33
+condvar-pthread (fd3): libstdc++.so.6.0.33
+condvar-pthread (fd3): libstdc++.so.6.0.33
+condvar-pthread (fd3): libstdc++.so.6.0.33
+condvar-pthread (fd3): libstdc++.so.6.0.33
+^C
+
+*/
+
+/* The retval filter prevents tracing fget() instances that are still running?
+ * Removing it appears to make no difference.
+ */
+kretfunc:fget
+{
+    if (strcontains(str(retval->f_path.dentry->d_name.name, 128), "libstdc++")) {
+         printf("%s (fd%d): %s\n", comm, args.fd, str(retval->f_path.dentry->d_name.name));
+    }
+}
