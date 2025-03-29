@@ -1,0 +1,103 @@
+#!/usr/bin/bpftrace
+
+/*
+
+Defined in include/linux/fs.h.
+
+/**
+[alison@schallkreis bpftrace-hol (main)]$ sudo bpftrace -lv 'struct dentry'
+struct dentry {
+        unsigned int d_flags;
+        seqcount_spinlock_t d_seq;
+        struct hlist_bl_node d_hash;
+        struct dentry *d_parent;
+        struct qstr d_name;
+        struct inode *d_inode;
+        unsigned char d_iname[40];
+        const struct dentry_operations *d_op;
+        struct super_block *d_sb;
+        long unsigned int d_time;
+        void *d_fsdata;
+        struct lockref d_lockref;
+        union {
+                struct list_head d_lru;
+                wait_queue_head_t *d_wait;
+        };
+        struct hlist_node d_sib;
+        struct hlist_head d_children;
+        union {
+                struct hlist_node d_alias;
+                struct hlist_bl_node d_in_lookup_hash;
+                struct callback_head d_rcu;
+        } d_u;
+};
+
+$ sudo bpftrace -lv 'struct qstr'
+struct qstr {
+        union {
+                struct {
+                        u32 hash;
+                        u32 len;
+                };
+                u64 hash_len;
+        };
+        const unsigned char *name;
+};
+
+ * vfs_unlink - unlink a filesystem object
+ * @idmap:	idmap of the mount the inode was found from
+ * @dir:	parent directory
+ * @dentry:	victim
+ * @delegated_inode: returns victim inode, if the inode is delegated.
+ *
+ * The caller must hold dir->i_mutex.
+ *
+ * If vfs_unlink discovers a delegation, it will return -EWOULDBLOCK and
+ * return a reference to the inode in delegated_inode.  The caller
+ * should then break the delegation on that inode and retry.  Because
+ * breaking a delegation may take a long time, the caller should drop
+ * dir->i_mutex before doing so.
+ *
+ * Alternatively, a caller may pass NULL for delegated_inode.  This may
+ * be appropriate for callers that expect the underlying filesystem not
+ * to be NFS exported.
+ *
+ * If the inode has been found through an idmapped mount the idmap of
+ * the vfsmount must be passed through @idmap. This function will then take
+ * care to map the inode according to @idmap before checking permissions.
+ * On non-idmapped mounts or if permission checking is to be performed on the
+ * raw inode simply pass @nop_mnt_idmap.
+ *
+ *int vfs_unlink(struct mnt_idmap *idmap, struct inode *dir,
+ *        struct dentry *dentry, struct inode **delegated_inode)
+
+$ locate doomed
+/home/alison/.cache/mozilla/firefox/ow63bxya.default-esr/cache2/doomed
+/home/alison/.cache/mozilla/firefox/ow63bxya.default-esr/cache2/doomed/1005007441
+/home/alison/.cache/mozilla/firefox/ow63bxya.default-esr/cache2/doomed/1165448516
+
+$ sudo ./exercise3-1.bt
+Attaching 1 probe...
+Cache2 I/O       name: 1839282484 parent: doomed
+kalendarac       name: kalendaracrc.lock parent: .config
+sort             name: sort7GndsL parent: tmp
+Cache2 I/O       name: 543893145 parent: doomed
+kalendarac       name: kalendaracrc.lock parent: .config
+plasmashell      name: plasmashellKppSvO.76.kioworker.socket parent: /
+plasmashell      name: plasmashellKppSvO.76.kioworker.socket parent: /
+KIO::WorkerThre  name: 55749ae0c77b0d43cdfdee5d11ddbfe2885e6b2e parent: 55749ae0c77b0d43cdfdee5d11ddbfe2885e6b2e
+emacs            name: .#exercise3-1.bt parent: bpftrace-hol
+KIO::WorkerThre  name: 4bc0f82093ae00db77f51037a62c25d47d498381 parent: 4bc0f82093ae00db77f51037a62c25d47d498381
+emacs            name: .#exercise3-1.bt parent: bpftrace-hol
+Cache2 I/O       name: 1354188788 parent: doomed
+kalendarac       name: kalendaracrc.lock parent: .config
+emacs            name: .#exercise3-1.bt parent: bpftrace-hol
+KIO::WorkerThre  name: eb0395743276083f2fcfd62e4ac22f25036986e8 parent: 157372fc9bcaa2cc76624953838e7d5e3fe24d29
+KIO::WorkerThre  name: 157372fc9bcaa2cc76624953838e7d5e3fe24d29 parent: 157372fc9bcaa2cc76624953838e7d5e3fe24d29
+
+*/
+
+kfunc:vfs_unlink
+{
+    printf("%-16s name: %s parent: %s\n", comm, str(args.dentry->d_name.name), str(args.dentry->d_parent->d_name.name));
+}
