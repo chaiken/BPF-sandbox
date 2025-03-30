@@ -1,0 +1,66 @@
+#!/usr/bin/bpftrace
+
+/*
+$ sudo bpftrace -lv 'tracepoint:lock:contention*'
+tracepoint:lock:contention_begin
+    void * lock_addr
+    unsigned int flags
+tracepoint:lock:contention_end
+    void * lock_addr
+
+Nothing running but bpftrace, emacs and KDE:
+$ sudo ./example3-3.bt
+Attaching 2 probes...
+contended time: 383922
+        rwsem_down_read_slowpath+867
+        rwsem_down_read_slowpath+867
+        down_read_killable+72
+        __access_remote_vm+75
+        proc_pid_cmdline_read+532
+        vfs_read+232
+        ksys_read+109
+        do_syscall_64+130
+        entry_SYSCALL_64_after_hwframe+118
+
+contended time: 1540780
+        rwsem_down_read_slowpath+867
+        rwsem_down_read_slowpath+867
+        down_read_killable+72
+        lock_mm_and_find_vma+150
+        do_user_addr_fault+301
+        exc_page_fault+126
+        asm_exc_page_fault+38
+
+contended time: 1010293
+        __ww_mutex_lock.constprop.0+1673
+        __ww_mutex_lock.constprop.0+1673
+        drm_modeset_lock+205
+        drm_atomic_get_plane_state+127
+        drm_atomic_set_property+691
+        drm_mode_atomic_ioctl+570
+        drm_ioctl_kernel+173
+        drm_ioctl+631
+        __x64_sys_ioctl+145
+        do_syscall_64+130
+        entry_SYSCALL_64_after_hwframe+118
+^C
+
+*/
+
+/* 100 micros */
+#define BLOCK_THRESHOLD (uint64)(1000 * 100)
+
+tracepoint:lock:contention_begin
+{
+    @[tid, args.lock_addr] = nsecs;
+}
+
+tracepoint:lock:contention_end
+/@[tid, args.lock_addr] != 0/
+{
+    $lock_duration = nsecs - @[tid, args.lock_addr];
+    if ($lock_duration > BLOCK_THRESHOLD) {
+        printf("contended time: %lld %s\n", $lock_duration, kstack);
+    }
+    delete(@, (tid, args.lock_addr));    
+}
