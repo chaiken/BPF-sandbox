@@ -1,0 +1,66 @@
+#!/usr/bin/bpftrace
+
+/*
+
+$ sudo bpftrace-hol/exercise3-3.bt 100000
+Attaching 4 probes...
+Lock-contention reporting threshold 100 micros
+^C
+
+@long_block_times:
+[64, 128)              4 |@@@@@@@@@@@@                                        |
+[128, 256)             8 |@@@@@@@@@@@@@@@@@@@@@@@@                            |
+[256, 512)             2 |@@@@@@                                              |
+[512, 1K)              8 |@@@@@@@@@@@@@@@@@@@@@@@@                            |
+[1K, 2K)              17 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+[2K, 4K)               9 |@@@@@@@@@@@@@@@@@@@@@@@@@@@                         |
+[4K, 8K)               1 |@@@                                                 |
+[8K, 16K)              1 |@@@                                                 |
+[16K, 32K)             0 |                                                    |
+[32K, 64K)             0 |                                                    |
+[64K, 128K)            3 |@@@@@@@@@                                           |
+[128K, 256K)           0 |                                                    |
+[256K, 512K)           0 |                                                    |
+[512K, 1M)             0 |                                                    |
+[1M, 2M)               0 |                                                    |
+[2M, 4M)               0 |                                                    |
+[4M, 8M)               0 |                                                    |
+[8M, 16M)              2 |@@@@@@                                              |
+
+ */
+
+#define NSECS_TO_MICROS 1000
+
+BEGIN
+{
+  @block_threshold = (uint64)$1/NSECS_TO_MICROS;
+  printf("Lock-contention reporting threshold %lu micros\n", @block_threshold);
+}
+
+tracepoint:lock:contention_begin
+{
+    @lock = args.lock_addr;
+    @[tid, @lock] = nsecs;
+}
+
+/* "ps -eLF" shows that systemd and kthreadd have a PPID of 0.  Apparently tid=0 is the core kernel. */
+tracepoint:lock:contention_end
+/@lock != 0 && @[tid, @lock] != 0/
+{
+    @lock_duration[tid,@lock] = (nsecs - @[tid, @lock])/NSECS_TO_MICROS;
+    if (@lock_duration[tid,@lock] > @block_threshold) {
+        @long_block_times = hist(@lock_duration[tid,@lock]);
+    }
+}
+
+END
+{
+    /*
+     * Deleting these first two maps does not suppress their printout; only clearing them does.
+     * Perhaps that's because the histogram relies on them?
+     */
+    clear(@);
+    clear(@lock_duration);
+    delete(@lock);
+    delete(@block_threshold);
+}
