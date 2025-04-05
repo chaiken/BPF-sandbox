@@ -1,0 +1,74 @@
+#!/usr/bin/bpftrace
+
+/*
+
+Nanoseconds output:
+
+[alison@schallkreis BPF-sandbox (main)]$ sudo bpftrace-hol/example4-2.bt
+Attaching 3 probes...
+^C
+
+@lifetime_hist[df]: 
+[512K, 1M)             1 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+
+@lifetime_hist[dmesg]: 
+[2M, 4M)               1 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+
+@lifetime_hist[grep]: 
+[4M, 8M)               1 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+
+@lifetime_hist[uptime]: 
+[64K, 128K)            1 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+
+@lifetime_hist[git]: 
+[64K, 128K)            1 |@@@@@@@@                                            |
+[128K, 256K)           6 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+[256K, 512K)           2 |@@@@@@@@@@@@@@@@@              
+
+Seconds output:
+$ sudo bpftrace-hol/example4-2.bt
+Attaching 3 probes...
+^C
+
+@lifetime_hist[git-remote-http]: 
+[2K, 4K)               1 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+
+@lifetime_hist[pager]: 
+[0]                    1 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+
+@lifetime_hist[git]: 
+[0]                   11 |@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@|
+[1]                    0 |                                                    |
+[2, 4)                 0 |                                                    |
+[4, 8)                 0 |                                                    |
+[8, 16)                0 |                                                    |
+[16, 32)               0 |                                                    |
+[32, 64)               0 |                                                    |
+[64, 128)              1 |@@@@                                                |
+[128, 256)             0 |                                                    |
+[256, 512)             0 |                                                    |
+[512, 1K)              1 |@@@@                                                |
+[1K, 2K)               1 |@@@@                                                |
+[2K, 4K)               2 |@@@@@@@@@                                           |
+[4K, 8K)               2 |@@@@@@@@@                                           |
+
+*/
+
+#define NSECS_TO_S 1000000
+
+uprobe:/usr/lib/x86_64-linux-gnu/libc.so.6:__libc_start_main
+{
+     @start_times[pid] = nsecs;
+}
+
+uprobe:/usr/lib/x86_64-linux-gnu/libc.so.6:exit
+/ @start_times[pid] != 0 /
+{
+    @lifetime_hist[comm] = hist((nsecs - @start_times[pid])/NSECS_TO_S);
+    delete(@start_times, pid);
+}
+
+END
+{
+   clear(@start_times);
+}

@@ -1,0 +1,83 @@
+#!/usr/bin/bpftrace
+
+/*
+
+$ sudo bpftrace -l 'uprobe:/usr/lib/x86_64-linux-gnu/libc.so.6:*' | wc -l
+2705
+
+$ sudo bpftrace -l 'uprobe:/usr/lib/x86_64-linux-gnu/libstdc++.so.6:*' | wc -l
+4546
+
+$ pgrep signal-desktop
+1606662
+1606668
+1606669
+1606671
+1606870
+1606880
+1606978
+[alison@schallkreis BPF-sandbox (main)]$ sudo bpftrace -l 'uprobe:/proc/1606662/exe:*' | more 
+uprobe:/proc/1606662/exe:_ZN2v810CpuProfile6DeleteEv
+uprobe:/proc/1606662/exe:_ZN2v810FixedArray9CheckCastEPNS_4DataE
+uprobe:/proc/1606662/exe:_ZN2v810Int16Array3NewENS_5LocalINS_11ArrayBufferEEEmm
+uprobe:/proc/1606662/exe:_ZN2v810Int16Array3NewENS_5LocalINS_17SharedArrayBufferEEEmm
+uprobe:/proc/1606662/exe:_ZN2v810Int16Array9CheckCastEPNS_5ValueE
+uprobe:/proc/1606662/exe:_ZN2v810Int32Array3NewENS_5LocalINS_11ArrayBufferEEEmm
+uprobe:/proc/1606662/exe:_ZN2v810Int32Array3NewENS_5LocalINS_17SharedArrayBufferEEEmm
+uprobe:/proc/1606662/exe:_ZN2v810Int32Array9CheckCastEPNS_5ValueE
+uprobe:/proc/1606662/exe:_ZN2v810StackTrace17CurrentStackTraceEPNS_7IsolateEiNS0_17StackTra
+ceOptionsE
+uprobe:/proc/1606662/exe:_ZN2v810StackTrace28CurrentScriptNameOrSourceURLEPNS_7IsolateE
+uprobe:/proc/1606662/exe:_ZN2v810TypedArray6LengthEv
+uprobe:/proc/1606662/exe:_ZN2v810TypedArray9CheckCastEPNS_5ValueE
+uprobe:/proc/1606662/exe:_ZN2v810Uint8Array3NewENS_5LocalINS_11ArrayBufferEEEmm
+uprobe:/proc/1606662/exe:_ZN2v810Uint8Array3NewENS_5LocalINS_17SharedArrayBufferEEEmm
+uprobe:/proc/1606662/exe:_ZN2v810Uint8Array9CheckCastEPNS_5ValueE
+uprobe:/proc/1606662/exe:_ZN2v811ArrayBuffer12SetDetachKeyENS_5LocalINS_5ValueE
+
+uprobe:/proc/1606662/exe:napi_set_property
+uprobe:/proc/1606662/exe:napi_strict_equals
+uprobe:/proc/1606662/exe:napi_throw
+uprobe:/proc/1606662/exe:napi_throw_error
+uprobe:/proc/1606662/exe:napi_throw_range_error
+uprobe:/proc/1606662/exe:napi_throw_type_error
+uprobe:/proc/1606662/exe:napi_type_tag_object
+uprobe:/proc/1606662/exe:napi_typeof
+uprobe:/proc/1606662/exe:napi_unref_threadsafe_function
+uprobe:/proc/1606662/exe:napi_unwrap
+uprobe:/proc/1606662/exe:napi_wrap
+uprobe:/proc/1606662/exe:node_api_create_external_string_latin1
+uprobe:/proc/1606662/exe:node_api_create_external_string_utf16
+uprobe:/proc/1606662/exe:node_api_create_property_key_latin1
+uprobe:/proc/1606662/exe:node_api_create_property_key_utf16
+uprobe:/proc/1606662/exe:node_api_create_property_key_utf8
+uprobe:/proc/1606662/exe:node_api_create_syntax_error
+uprobe:/proc/1606662/exe:node_api_get_module_file_name
+uprobe:/proc/1606662/exe:node_api_post_finalizer
+uprobe:/proc/1606662/exe:node_api_symbol_for
+uprobe:/proc/1606662/exe:node_api_throw_syntax_error
+uprobe:/proc/1606662/exe:node_module_register
+uprobe:/proc/1606662/exe:posix_memalign
+uprobe:/proc/1606662/exe:pvalloc
+
+[alison@schallkreis BPF-sandbox (main)]$ grep banana /etc/passwd
+[alison@schallkreis BPF-sandbox (main)]$ echo $?
+1
+[alison@schallkreis BPF-sandbox (main)]$ cat /etc/shadow-
+cat: /etc/shadow-: Permission denied
+[alison@schallkreis BPF-sandbox (main)]$ echo $?
+1
+
+[alison@schallkreis BPF-sandbox (main)]$ sudo bpftrace-hol/example4-1.bt Attaching 1 probe...
+cat exited with code 1
+grep exited with code 1
+cat exited with code 1
+
+*/
+
+uprobe:/usr/lib/x86_64-linux-gnu/libc.so.6:exit
+{
+    if (0 != arg0) {
+        printf("%s exited with code %d\n", comm, arg0);
+    }
+}
