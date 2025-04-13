@@ -1,0 +1,20 @@
+#!/usr/bin/bpftrace
+
+BEGIN
+{
+  @start = nsecs(boot);
+}
+
+fentry:usbcore:usb_autoresume_device
+{
+    $dev = (struct usb_device*)args->udev;
+    //ERROR: BPF_FUNC_d_path not available for your kernel version
+    //@path = path($dev->devpath);
+    printf("%lld s: %s at 00%d:00%d woken by tid $%lld\n", (nsecs(boot) - @start)/1e9, str($dev->product), $dev->bus->busnum, $dev->devnum, tid);
+}
+
+END
+{
+    printf("total elapsed time: %llds\n", (nsecs(boot) - @start)/1e9);
+    delete(@start);
+}
