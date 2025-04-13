@@ -13,8 +13,20 @@ fentry:usbcore:usb_autoresume_device
     printf("%lld s: %s at 00%d:00%d woken by tid $%lld\n", (nsecs(boot) - @start)/1e9, str($dev->product), $dev->bus->busnum, $dev->devnum, tid);
 }
 
+kprobe:pci_mmcfg_read
+{
+   @cfg_read_start[tid,comm] = nsecs;
+}
+
+kretprobe:pci_mmcfg_read
+/ @cfg_read_start[tid,comm] != 0 /
+{
+   printf("pci_mmcfg_read() for comm %s with tid %lld took %lld ns\n", comm, tid, (nsecs-@cfg_read_start[tid,comm]));
+}
+
 END
 {
     printf("total elapsed time: %llds\n", (nsecs(boot) - @start)/1e9);
     delete(@start);
+    delete(@cfg_read_start[tid,comm]);
 }
