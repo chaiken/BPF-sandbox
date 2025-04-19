@@ -10,17 +10,20 @@
 #define NSECS_TO_MILLIS 1000000
 // One second threshold.
 #define LOCK_REPORTING_THRESHOLD 1000
+// In ns: 10 micros.
+#define PCIE_SPY_THRESHOLD 10000
 
 fentry:usbcore:usb_autoresume_device
 {
     @usb_resumer_tid = tid;
-    $dev = (struct usb_device*)args->udev;
+    // Suppress too-voluminous printing.
+    // $dev = (struct usb_device*)args->udev;
     //ERROR: BPF_FUNC_d_path not available for your kernel version
     //@path = path($dev->devpath);
-    printf("%s: %s at 00%d:00%d woken by tid $%lld\n", strftime("%H:%M:%S", nsecs), str($dev->product), $dev->bus->busnum, $dev->devnum, tid);
+    //printf("%s: %s at 00%d:00%d woken by tid $%lld\n", strftime("%H:%M:%S", nsecs), str($dev->product), $dev->bus->busnum, $dev->devnum, tid);
 }
 
-// Only trace PCIe if USB has worken it.
+// Only trace PCIe if USB has woken it.
 kprobe:pci_mmcfg_read
 {
    if (@usb_resumer_tid == tid) {
@@ -31,7 +34,10 @@ kprobe:pci_mmcfg_read
 kretprobe:pci_mmcfg_read
 / @cfg_read_start[tid,comm] != 0 /
 {
-   printf("pci_mmcfg_read() for comm %s with tid %lld took %lld ns\n", comm, tid, (nsecs-@cfg_read_start[tid,comm]));
+   $elapsed = nsecs-@cfg_read_start[tid,comm];
+   if ($elapsed > PCIE_SPY_THRESHOLD) {
+      printf("pci_mmcfg_read() for comm %s with tid %lld took %lld ns\n", comm, tid, (nsecs-@cfg_read_start[tid,comm]));
+   }
 }
 
 // Only trace locks if PCIe or USB hold them.
