@@ -1,21 +1,31 @@
 #!/usr/bin/bpftrace
 
-BEGIN
-{
-  @start = nsecs(boot);
-}
+/*
+  Record tids of callers to usb_autoresume_device().   If the resumption
+  triggers pci_mmcfg_read(), record the time that function takes.   Also
+  track the lock-contention time of any locks the thread takes.  If a 1s
+  lock-contention threshold is exceeded, dump the stacks.
+*/
+
+#define NSECS_TO_MILLIS 1000000
+// One second threshold.
+#define LOCK_REPORTING_THRESHOLD 1000
 
 fentry:usbcore:usb_autoresume_device
 {
+    @usb_resumer_tid = tid;
     $dev = (struct usb_device*)args->udev;
     //ERROR: BPF_FUNC_d_path not available for your kernel version
     //@path = path($dev->devpath);
-    printf("%lld s: %s at 00%d:00%d woken by tid $%lld\n", (nsecs(boot) - @start)/1e9, str($dev->product), $dev->bus->busnum, $dev->devnum, tid);
+    printf("%s: %s at 00%d:00%d woken by tid $%lld\n", strftime("%H:%M:%S", nsecs), str($dev->product), $dev->bus->busnum, $dev->devnum, tid);
 }
 
+// Only trace PCIe if USB has worken it.
 kprobe:pci_mmcfg_read
 {
-   @cfg_read_start[tid,comm] = nsecs;
+   if (@usb_resumer_tid == tid) {
+      @cfg_read_start[tid,comm] = nsecs;
+   }
 }
 
 kretprobe:pci_mmcfg_read
@@ -24,9 +34,30 @@ kretprobe:pci_mmcfg_read
    printf("pci_mmcfg_read() for comm %s with tid %lld took %lld ns\n", comm, tid, (nsecs-@cfg_read_start[tid,comm]));
 }
 
+// Only trace locks if PCIe or USB hold them.
+tracepoint:lock:contention_begin
+{
+    if (@usb_resumer_tid == tid) {
+        @lock = args.lock_addr;
+        @held_lock[tid, @lock] = nsecs;
+    }
+}
+
+tracepoint:lock:contention_end
+/@lock != 0 && @held_lock[tid, @lock] != 0/
+{
+    @lock_duration[tid,@lock] = (nsecs - @held_lock[tid, @lock])/NSECS_TO_MILLIS;
+    if (@lock_duration[tid,@lock] > LOCK_REPORTING_THRESHOLD) {
+        printf("%s: lock contended for %lld]n", comm, @lock_duration[tid,@lock]);
+	ustack();
+	kstack();
+    }
+}
+
 END
 {
-    printf("total elapsed time: %llds\n", (nsecs(boot) - @start)/1e9);
-    delete(@start);
-    delete(@cfg_read_start[tid,comm]);
+    clear(@lock);
+    clear(@lock_duration);
+    clear(@cfg_read_start);
+    clear(@held_lock);
 }
