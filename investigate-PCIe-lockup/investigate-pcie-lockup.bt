@@ -13,6 +13,7 @@
 // In ns: 10 micros.
 #define PCIE_SPY_THRESHOLD 10000
 
+// Capture the TID of the thread calling usb_autoresume_device().
 fentry:usbcore:usb_autoresume_device
 {
     @usb_resumer_tid = tid;
@@ -38,9 +39,10 @@ kretprobe:pci_mmcfg_read
    if ($elapsed > PCIE_SPY_THRESHOLD) {
       printf("pci_mmcfg_read() for comm %s with tid %lld took %lld ns\n", comm, tid, (nsecs-@cfg_read_start[tid,comm]));
    }
+   clear(@cfg_read_start);
 }
 
-// Only trace locks if PCIe or USB hold them.
+// Only trace locks if USB-resume thread holds them.
 tracepoint:lock:contention_begin
 {
     if (@usb_resumer_tid == tid) {
@@ -58,12 +60,12 @@ tracepoint:lock:contention_end
 	ustack();
 	kstack();
     }
+    clear(@lock);
+    clear(@lock_duration);
+    clear(@held_lock);
 }
 
 END
 {
-    clear(@lock);
-    clear(@lock_duration);
-    clear(@cfg_read_start);
-    clear(@held_lock);
+    clear(@usb_resumer_tid);
 }
