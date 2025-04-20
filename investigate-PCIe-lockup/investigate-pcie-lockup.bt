@@ -8,8 +8,8 @@
 */
 
 #define NSECS_TO_S 1000000000
-// One second threshold.
-#define LOCK_REPORTING_THRESHOLD 1000
+// Ten seconds threshold.
+#define LOCK_REPORTING_THRESHOLD 10
 // In ns: 10 micros.
 #define PCIE_SPY_THRESHOLD 10000
 
