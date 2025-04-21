@@ -27,7 +27,7 @@ fentry:usbcore:usb_autoresume_device
 // Only trace PCIe if USB has woken it.
 kprobe:pci_mmcfg_read
 {
-   if (@usb_resumer_tid == tid) {
+   if (tid == @usb_resumer_tid) {
       @cfg_read_start[tid,comm] = nsecs;
    }
 }
@@ -37,7 +37,7 @@ kretprobe:pci_mmcfg_read
 {
    $elapsed = nsecs-@cfg_read_start[tid,comm];
    if ($elapsed > PCIE_SPY_THRESHOLD) {
-      printf("pci_mmcfg_read() for comm %s with tid %lld took %lld ns\n", comm, tid, (nsecs-@cfg_read_start[tid,comm]));
+      printf("pci_mmcfg_read() for comm %s with tid %lld took %lld s\n", comm, tid, (nsecs-@cfg_read_start[tid,comm])/NSECS_TO_S);
    }
    clear(@cfg_read_start);
 }
@@ -45,7 +45,7 @@ kretprobe:pci_mmcfg_read
 // Only trace locks if USB-resume thread holds them.
 tracepoint:lock:contention_begin
 {
-    if (@usb_resumer_tid == tid) {
+    if (tid == @usb_resumer_tid) {
         @lock = args.lock_addr;
         @held_lock[tid, @lock] = nsecs;
     }
