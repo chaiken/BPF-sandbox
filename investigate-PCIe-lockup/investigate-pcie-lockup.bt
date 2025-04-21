@@ -10,8 +10,8 @@
 #define NSECS_TO_S 1000000000
 // Ten seconds threshold.
 #define LOCK_REPORTING_THRESHOLD 10
-// In ns: 10 micros.
-#define PCIE_SPY_THRESHOLD 10000
+// 1 second
+#define PCIE_SPY_THRESHOLD 1
 
 // Capture the TID of the thread calling usb_autoresume_device().
 fentry:usbcore:usb_autoresume_device
@@ -35,9 +35,9 @@ kprobe:pci_mmcfg_read
 kretprobe:pci_mmcfg_read
 / @cfg_read_start[tid,comm] != 0 /
 {
-   $elapsed = nsecs-@cfg_read_start[tid,comm];
+   $elapsed = (nsecs-@cfg_read_start[tid,comm])/NSECS_TO_S;
    if ($elapsed > PCIE_SPY_THRESHOLD) {
-      printf("pci_mmcfg_read() for comm %s with tid %lld took %lld s\n", comm, tid, (nsecs-@cfg_read_start[tid,comm])/NSECS_TO_S);
+      printf("pci_mmcfg_read() for comm %s with tid %lld took %lld s\n", comm, tid, $elapsed);
    }
    clear(@cfg_read_start);
 }
