@@ -57,8 +57,8 @@ tracepoint:lock:contention_end
     @lock_duration[tid,@lock] = (nsecs - @held_lock[tid, @lock])/NSECS_TO_S;
     if (@lock_duration[tid,@lock] > LOCK_REPORTING_THRESHOLD) {
         printf("%s: lock contended for %llds\n", comm, @lock_duration[tid,@lock]);
-	ustack();
-	kstack();
+        print(ustack());
+        print(kstack());
     }
     clear(@lock);
     clear(@lock_duration);
