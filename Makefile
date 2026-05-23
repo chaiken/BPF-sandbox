@@ -21,7 +21,7 @@ BPF_LIBS=$(BPF_LIB_PATH)/libbcc.a $(BPF_LIB_PATH)/libbcc-loader-static.a $(BPF_L
 TLD=$(HOME)/gitsrc
 
 FOLLY_DIR=$(TLD)/folly
-FOLLY_LIB_PATH=$(TLD)/fbcode-install/folly/lib
+FOLLY_LIB_PATH=$(TLD)/folly/build
 FOLLY_HEADERS=$(FOLLY_DIR)
 FOLLY_LIBS=$(FOLLY_LIB_PATH)/libfolly.a $(FOLLY_LIB_PATH)/libfolly_test_util.a
 

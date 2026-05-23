@@ -11,7 +11,7 @@
 #include "arg_classifier.h"
 
 // Path is relative to the -I flags in the Makefile.
-#include "template_integrate.h"
+#include "template_integrate.hh"
 
 #include <values.h>
 
